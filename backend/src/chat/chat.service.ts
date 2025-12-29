@@ -237,4 +237,32 @@ export class ChatService {
 
     return { message: 'Message deleted successfully' };
   }
+
+  async getTotalUnreadCount(userId: string) {
+    // Get all conversations where user is participant
+    const conversations = await this.prisma.conversation.findMany({
+      where: {
+        OR: [
+          { studentId: userId },
+          { tutorId: userId },
+        ],
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const conversationIds = conversations.map(c => c.id);
+
+    // Count all unread messages across all conversations
+    const totalUnread = await this.prisma.message.count({
+      where: {
+        conversationId: { in: conversationIds },
+        senderUserId: { not: userId },
+        readAt: null,
+      },
+    });
+
+    return { totalUnread };
+  }
 }

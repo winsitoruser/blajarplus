@@ -5,10 +5,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { SearchModule } from './search/search.module';
+import { ChatModule } from './chat/chat.module';
 // import { TutorsModule } from './tutors/tutors.module';
 // import { BookingsModule } from './bookings/bookings.module';
 // import { PaymentsModule } from './payments/payments.module';
-// import { ChatModule } from './chat/chat.module';
 // import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
@@ -32,10 +32,10 @@ import { SearchModule } from './search/search.module';
     AuthModule,
     UsersModule,
     SearchModule,
+    ChatModule,
     // TutorsModule, // Temporarily disabled due to TypeScript errors
     // BookingsModule, // Temporarily disabled due to TypeScript errors
     // PaymentsModule, // Temporarily disabled due to TypeScript errors
-    // ChatModule, // Temporarily disabled due to TypeScript errors
     // ReviewsModule, // Temporarily disabled due to TypeScript errors
   ],
 })

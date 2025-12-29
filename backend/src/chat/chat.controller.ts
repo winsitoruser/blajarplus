@@ -53,4 +53,10 @@ export class ChatController {
   deleteMessage(@Req() req, @Param('id') id: string) {
     return this.chatService.deleteMessage(req.user.id, id);
   }
+
+  @Get('unread-count')
+  @ApiOperation({ summary: 'Get total unread message count' })
+  getTotalUnreadCount(@Req() req) {
+    return this.chatService.getTotalUnreadCount(req.user.id);
+  }
 }

@@ -1,11 +1,34 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 export function Navbar() {
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      setIsLoggedIn(true);
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setIsLoggedIn(false);
+    setUser(null);
+    router.push('/');
+  };
 
   return (
     <nav className="bg-gradient-to-r from-primary-600 to-primary-700 shadow-lg sticky top-0 z-50">
@@ -26,6 +49,11 @@ export function Navbar() {
             <Link href="/search" className="text-white hover:text-secondary-200 transition font-medium">
               Cari Tutor
             </Link>
+            {isLoggedIn && (
+              <Link href="/dashboard" className="text-white hover:text-secondary-200 transition font-medium">
+                Dashboard
+              </Link>
+            )}
             <Link href="/how-it-works" className="text-white hover:text-secondary-200 transition font-medium">
               Cara Kerja
             </Link>
@@ -35,12 +63,27 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/login">
-              <Button variant="ghost" className="text-white hover:bg-white/20 border-white/30">Masuk</Button>
-            </Link>
-            <Link href="/register">
-              <Button className="bg-secondary-500 hover:bg-secondary-600 text-white">Daftar</Button>
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <span className="text-white text-sm font-medium">Halo, {user?.fullName || 'User'}</span>
+                <Button 
+                  onClick={handleLogout}
+                  variant="ghost" 
+                  className="text-white hover:bg-white/20 border-white/30"
+                >
+                  Keluar
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" className="text-white hover:bg-white/20 border-white/30">Masuk</Button>
+                </Link>
+                <Link href="/register">
+                  <Button className="bg-secondary-500 hover:bg-secondary-600 text-white">Daftar</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           <div className="md:hidden">
@@ -69,6 +112,14 @@ export function Navbar() {
             >
               Cari Tutor
             </Link>
+            {isLoggedIn && (
+              <Link
+                href="/dashboard"
+                className="block px-3 py-2 text-white hover:bg-white/10 rounded-md font-medium"
+              >
+                Dashboard
+              </Link>
+            )}
             <Link
               href="/how-it-works"
               className="block px-3 py-2 text-white hover:bg-white/10 rounded-md font-medium"
@@ -82,12 +133,29 @@ export function Navbar() {
               Jadi Tutor
             </Link>
             <div className="pt-4 pb-2 space-y-2">
-              <Link href="/login" className="block">
-                <Button variant="ghost" className="w-full text-white hover:bg-white/20 border-white/30">Masuk</Button>
-              </Link>
-              <Link href="/register" className="block">
-                <Button className="w-full bg-secondary-500 hover:bg-secondary-600">Daftar</Button>
-              </Link>
+              {isLoggedIn ? (
+                <>
+                  <div className="px-3 py-2 text-white text-sm font-medium">
+                    Halo, {user?.fullName || 'User'}
+                  </div>
+                  <Button 
+                    onClick={handleLogout}
+                    variant="ghost" 
+                    className="w-full text-white hover:bg-white/20 border-white/30"
+                  >
+                    Keluar
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="block">
+                    <Button variant="ghost" className="w-full text-white hover:bg-white/20 border-white/30">Masuk</Button>
+                  </Link>
+                  <Link href="/register" className="block">
+                    <Button className="w-full bg-secondary-500 hover:bg-secondary-600">Daftar</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
