@@ -1,0 +1,88 @@
+// Add these models to your main schema.prisma file
+
+model UserProgress {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  totalXP         Int      @default(0) @map("total_xp")
+  level           Int      @default(1)
+  currentStreak   Int      @default(0) @map("current_streak")
+  longestStreak   Int      @default(0) @map("longest_streak")
+  totalLessons    Int      @default(0) @map("total_lessons")
+  hoursLearned    Decimal  @default(0) @map("hours_learned")
+  lastLessonDate  DateTime? @map("last_lesson_date")
+  rank            String   @default("Bronze") // Bronze, Silver, Gold, Platinum, Diamond
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([level])
+  @@index([totalXP])
+  @@map("user_progress")
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  code        String   @unique // e.g., "first_lesson", "week_warrior"
+  name        String
+  description String
+  icon        String
+  category    String   // e.g., "lessons", "streak", "time", "social"
+  requirement Int      // Number required to unlock
+  xpReward    Int      @map("xp_reward")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  userAchievements UserAchievement[]
+
+  @@index([code])
+  @@index([category])
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  achievementId String   @map("achievement_id")
+  unlockedAt    DateTime @default(now()) @map("unlocked_at")
+  progress      Int      @default(0) // Current progress towards achievement
+  
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+  @@map("user_achievements")
+}
+
+model LearningHistory {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  bookingId   String   @map("booking_id")
+  subject     String
+  tutorName   String   @map("tutor_name")
+  duration    Decimal  // in hours
+  rating      Int?     // 1-5
+  xpEarned    Int      @map("xp_earned")
+  notes       String?
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([bookingId])
+  @@index([completedAt])
+  @@map("learning_history")
+}
+
+// Add these relations to existing User model:
+// userProgress      UserProgress?
+// userAchievements  UserAchievement[]
+// learningHistory   LearningHistory[]
+
+// Add this relation to existing Booking model:
+// learningHistory   LearningHistory[]
