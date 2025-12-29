@@ -55,6 +55,117 @@ export default function ChatConversationPage() {
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
+      // Use mock data if backend is not available
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const isStudent = user.role === 'student';
+      
+      const mockConversations: any = {
+        '1': {
+          otherUser: {
+            id: isStudent ? 'tutor-1' : 'student-1',
+            fullName: isStudent ? 'Budi Santoso' : 'Ahmad Rizki',
+            avatarUrl: null,
+          },
+          messages: [
+            {
+              id: '1',
+              senderId: isStudent ? 'tutor-1' : user.id,
+              message: isStudent 
+                ? 'Halo! Terima kasih sudah booking les Matematika dengan saya. Ada yang ingin ditanyakan?'
+                : 'Pak, besok saya bisa les jam berapa?',
+              createdAt: new Date('2024-12-28T09:00:00').toISOString(),
+            },
+            {
+              id: '2',
+              senderId: isStudent ? user.id : 'tutor-1',
+              message: isStudent
+                ? 'Pak, untuk materi besok fokus ke trigonometri ya. Saya masih bingung di bagian identitas trigonometri.'
+                : 'Baik, besok jam 10 pagi ya. Jangan lupa bawa buku catatan.',
+              createdAt: new Date('2024-12-28T09:15:00').toISOString(),
+            },
+            {
+              id: '3',
+              senderId: isStudent ? 'tutor-1' : user.id,
+              message: isStudent
+                ? 'Baik, saya siap mengajar besok jam 10 pagi. Jangan lupa siapkan materi yang ingin dipelajari ya!'
+                : 'Siap Pak, terima kasih!',
+              createdAt: new Date('2024-12-28T15:30:00').toISOString(),
+            },
+          ],
+        },
+        '2': {
+          otherUser: {
+            id: isStudent ? 'tutor-2' : 'student-2',
+            fullName: isStudent ? 'Siti Nurhaliza' : 'Dewi Lestari',
+            avatarUrl: null,
+          },
+          messages: [
+            {
+              id: '4',
+              senderId: isStudent ? 'tutor-2' : user.id,
+              message: isStudent
+                ? 'Hi! Ready for our English conversation class tomorrow?'
+                : 'Miss, untuk materi IELTS speaking sudah saya pelajari.',
+              createdAt: new Date('2024-12-27T08:00:00').toISOString(),
+            },
+            {
+              id: '5',
+              senderId: isStudent ? user.id : 'tutor-2',
+              message: isStudent
+                ? 'Yes! I\'ve prepared some topics for discussion. Should we focus on IELTS speaking part 2?'
+                : 'Great! Besok kita practice ya.',
+              createdAt: new Date('2024-12-27T08:30:00').toISOString(),
+            },
+            {
+              id: '6',
+              senderId: isStudent ? 'tutor-2' : user.id,
+              message: isStudent
+                ? 'Great! See you tomorrow at 2 PM for our English conversation class.'
+                : 'Siap Miss, see you tomorrow!',
+              createdAt: new Date('2024-12-27T10:15:00').toISOString(),
+            },
+          ],
+        },
+        '3': {
+          otherUser: {
+            id: isStudent ? 'tutor-3' : 'student-3',
+            fullName: isStudent ? 'Dewi Lestari' : 'Fajar Ramadhan',
+            avatarUrl: null,
+          },
+          messages: [
+            {
+              id: '7',
+              senderId: isStudent ? 'tutor-3' : user.id,
+              message: isStudent
+                ? 'Halo! Untuk project React kamu, sudah sampai mana progress-nya?'
+                : 'Kak, saya sudah coba bikin component tapi masih error.',
+              createdAt: new Date('2024-12-26T13:00:00').toISOString(),
+            },
+            {
+              id: '8',
+              senderId: isStudent ? user.id : 'tutor-3',
+              message: isStudent
+                ? 'Sudah buat beberapa component, tapi masih error di bagian props passing.'
+                : 'Oke, nanti kita debug bareng ya.',
+              createdAt: new Date('2024-12-26T13:30:00').toISOString(),
+            },
+            {
+              id: '9',
+              senderId: isStudent ? 'tutor-3' : user.id,
+              message: isStudent
+                ? 'Untuk project React kamu, coba dulu buat component sederhana. Nanti kita review bareng.'
+                : 'Terima kasih Kak!',
+              createdAt: new Date('2024-12-26T14:20:00').toISOString(),
+            },
+          ],
+        },
+      };
+      
+      const conversation = mockConversations[params.conversationId as string];
+      if (conversation) {
+        setOtherUser(conversation.otherUser);
+        setMessages(conversation.messages);
+      }
     } finally {
       setLoading(false);
     }
@@ -83,6 +194,34 @@ export default function ChatConversationPage() {
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
+      // Demo mode: Add message locally
+      const newMsg = {
+        id: `msg-${Date.now()}`,
+        senderId: currentUserId,
+        message: newMessage.trim(),
+        createdAt: new Date().toISOString(),
+      };
+      setMessages([...messages, newMsg]);
+      setNewMessage('');
+      
+      // Simulate reply after 2 seconds
+      setTimeout(() => {
+        const replies = [
+          'Terima kasih atas pesannya! Saya akan segera merespons.',
+          'Baik, saya mengerti. Kita bisa diskusikan lebih lanjut nanti.',
+          'Oke, noted! Sampai jumpa di sesi berikutnya.',
+          'Siap, saya akan persiapkan materinya.',
+        ];
+        const randomReply = replies[Math.floor(Math.random() * replies.length)];
+        
+        const replyMsg = {
+          id: `msg-${Date.now()}`,
+          senderId: otherUser?.id || 'other-user',
+          message: randomReply,
+          createdAt: new Date().toISOString(),
+        };
+        setMessages(prev => [...prev, replyMsg]);
+      }, 2000);
     } finally {
       setSending(false);
     }

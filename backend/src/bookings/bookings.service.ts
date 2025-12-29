@@ -7,6 +7,12 @@ import { BookingStatus } from '@prisma/client';
 export class BookingsService {
   constructor(private prisma: PrismaService) {}
 
+  private generateBookingNumber(): string {
+    const year = new Date().getFullYear();
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `BKG-${year}-${random}`;
+  }
+
   async createBooking(studentId: string, dto: CreateBookingDto) {
     // Verify tutor exists and is verified
     const tutor = await this.prisma.tutorProfile.findUnique({
@@ -359,7 +365,7 @@ export class BookingsService {
     await this.prisma.tutorProfile.update({
       where: { id: booking.tutorId },
       data: {
-        totalStudents: { increment: 1 },
+        completedLessonsCount: { increment: 1 },
       },
     });
 

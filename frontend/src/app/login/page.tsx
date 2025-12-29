@@ -35,6 +35,22 @@ export default function LoginPage() {
     }
   };
 
+  const handleDemoLogin = (role: 'student' | 'tutor') => {
+    const mockUser = {
+      id: `demo-${role}-${Date.now()}`,
+      email: `demo-${role}@blajarplus.com`,
+      fullName: role === 'student' ? 'Demo Student' : 'Demo Tutor',
+      role: role,
+      status: 'active',
+      avatarUrl: null,
+    };
+
+    localStorage.setItem('token', 'demo-token-' + Date.now());
+    localStorage.setItem('user', JSON.stringify(mockUser));
+    
+    router.push('/dashboard');
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
@@ -137,6 +153,31 @@ export default function LoginPage() {
                 Daftar sekarang
               </Link>
             </p>
+
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <p className="text-center text-sm font-medium text-gray-700 mb-3">
+                Demo Mode (Tanpa Backend)
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  onClick={() => handleDemoLogin('student')}
+                  className="w-full bg-blue-500 hover:bg-blue-600"
+                >
+                  Login sebagai Student
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => handleDemoLogin('tutor')}
+                  className="w-full bg-green-500 hover:bg-green-600"
+                >
+                  Login sebagai Tutor
+                </Button>
+              </div>
+              <p className="text-center text-xs text-gray-500 mt-2">
+                Klik tombol di atas untuk melihat dashboard tanpa koneksi backend
+              </p>
+            </div>
           </form>
         </CardContent>
       </Card>

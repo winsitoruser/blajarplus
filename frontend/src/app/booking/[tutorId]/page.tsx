@@ -45,7 +45,114 @@ export default function BookingPage() {
       }
     } catch (error) {
       console.error('Error fetching tutor:', error);
-      setError('Tutor tidak ditemukan');
+      // Use mock data if backend is not available
+      const mockTutors: any = {
+        '1': {
+          id: '1',
+          user: {
+            fullName: 'Budi Santoso',
+            avatarUrl: null,
+          },
+          hourlyRate: 150000,
+          averageRating: 4.8,
+          teachingMethods: ['online', 'offline'],
+          offerFreeTrial: true,
+          freeTrialDuration: 60,
+          subjects: [
+            { id: '1', name: 'Matematika' },
+            { id: '2', name: 'Fisika' },
+          ],
+        },
+        '2': {
+          id: '2',
+          user: {
+            fullName: 'Siti Nurhaliza',
+            avatarUrl: null,
+          },
+          hourlyRate: 200000,
+          averageRating: 4.9,
+          teachingMethods: ['online'],
+          offerFreeTrial: false,
+          freeTrialDuration: null,
+          subjects: [
+            { id: '5', name: 'Bahasa Inggris' },
+          ],
+        },
+        '3': {
+          id: '3',
+          user: {
+            fullName: 'Andi Wijaya',
+            avatarUrl: null,
+          },
+          hourlyRate: 175000,
+          averageRating: 4.7,
+          teachingMethods: ['online', 'offline'],
+          offerFreeTrial: true,
+          freeTrialDuration: 90,
+          subjects: [
+            { id: '2', name: 'Fisika' },
+            { id: '1', name: 'Matematika' },
+            { id: '3', name: 'Kimia' },
+          ],
+        },
+        '4': {
+          id: '4',
+          user: {
+            fullName: 'Dewi Lestari',
+            avatarUrl: null,
+          },
+          hourlyRate: 250000,
+          averageRating: 5.0,
+          teachingMethods: ['online'],
+          offerFreeTrial: true,
+          freeTrialDuration: 30,
+          subjects: [
+            { id: '7', name: 'Programming' },
+          ],
+        },
+        '5': {
+          id: '5',
+          user: {
+            fullName: 'Rudi Hartono',
+            avatarUrl: null,
+          },
+          hourlyRate: 125000,
+          averageRating: 4.6,
+          teachingMethods: ['offline'],
+          offerFreeTrial: false,
+          freeTrialDuration: null,
+          subjects: [
+            { id: '3', name: 'Kimia' },
+            { id: '4', name: 'Biologi' },
+          ],
+        },
+        '6': {
+          id: '6',
+          user: {
+            fullName: 'Maya Sari',
+            avatarUrl: null,
+          },
+          hourlyRate: 180000,
+          averageRating: 4.8,
+          teachingMethods: ['online'],
+          offerFreeTrial: false,
+          freeTrialDuration: null,
+          subjects: [
+            { id: '8', name: 'Design Grafis' },
+          ],
+        },
+      };
+      
+      const tutorData = mockTutors[params.tutorId as string];
+      if (tutorData) {
+        setTutor(tutorData);
+        // Set default subject if available
+        if (tutorData.subjects.length > 0) {
+          setFormData(prev => ({ ...prev, subjectId: tutorData.subjects[0].id }));
+        }
+      } else {
+        setError('Tutor tidak ditemukan');
+      }
     } finally {
       setLoading(false);
     }
@@ -85,6 +192,12 @@ export default function BookingPage() {
       // Redirect to payment page
       router.push(`/payment/${response.data.id}`);
     } catch (err: any) {
+      // Demo mode: Show success message instead of error
+      if (err.message?.includes('Network Error') || err.code === 'ERR_NETWORK') {
+        alert('✅ Demo Mode: Booking berhasil dibuat!\n\nDalam mode demo, data tidak tersimpan ke database.\nUntuk fungsi penuh, backend perlu dijalankan.');
+        router.push('/dashboard');
+        return;
+      }
       setError(err.response?.data?.message || 'Gagal membuat booking. Silakan coba lagi.');
     } finally {
       setSubmitting(false);
@@ -130,6 +243,24 @@ export default function BookingPage() {
                     {error && (
                       <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
                         {error}
+                      </div>
+                    )}
+
+                    {/* Free Trial Notification */}
+                    {tutor.offerFreeTrial && (
+                      <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <span className="text-2xl">🎁</span>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-green-800 mb-1">
+                              Free Trial Tersedia!
+                            </h3>
+                            <p className="text-sm text-green-700">
+                              {tutor.user.fullName} menawarkan <strong>{tutor.freeTrialDuration} menit gratis</strong> untuk pertemuan pertama Anda. 
+                              Manfaatkan kesempatan ini untuk mencoba metode mengajar sebelum berkomitmen!
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     )}
 

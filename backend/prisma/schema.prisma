@@ -62,8 +62,8 @@ model UserAddress {
   city           String?
   district       String?
   addressDetail  String?  @map("address_detail")
-  lat            Decimal? @db.Decimal(10, 8)
-  lng            Decimal? @db.Decimal(11, 8)
+  lat            Decimal? 
+  lng            Decimal? 
   isPrimary      Boolean  @default(false) @map("is_primary")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
@@ -100,15 +100,17 @@ model TutorProfile {
   baseCity               String?            @map("base_city")
   timezone               String             @default("Asia/Jakarta")
   introVideoUrl          String?            @map("intro_video_url")
-  hourlyRate             Decimal            @map("hourly_rate") @db.Decimal(12, 2)
+  hourlyRate             Decimal            @map("hourly_rate") 
   currency               String             @default("IDR")
   isVerified             Boolean            @default(false) @map("is_verified")
   verificationStatus     VerificationStatus @default(none) @map("verification_status")
   verificationNote       String?            @map("verification_note")
-  ratingAvg              Decimal            @default(0.0) @map("rating_avg") @db.Decimal(2, 1)
+  ratingAvg              Decimal            @default(0.0) @map("rating_avg") 
   ratingCount            Int                @default(0) @map("rating_count")
   completedLessonsCount  Int                @default(0) @map("completed_lessons_count")
   responseRate           Int                @default(0) @map("response_rate")
+  offerFreeTrial         Boolean            @default(false) @map("offer_free_trial")
+  freeTrialDuration      Int?               @map("free_trial_duration")
   status                 TutorStatus        @default(draft)
   createdAt              DateTime           @default(now()) @map("created_at")
   updatedAt              DateTime           @updatedAt @map("updated_at")
@@ -179,7 +181,7 @@ model TutorSubject {
   tutorId       String   @map("tutor_profile_id")
   subjectId     String   @map("subject_id")
   level         Level
-  priceOverride Decimal? @map("price_override") @db.Decimal(12, 2)
+  priceOverride Decimal? @map("price_override") 
   currency      String   @default("IDR")
   description   String?
   isActive      Boolean  @default(true) @map("is_active")
@@ -291,6 +293,7 @@ enum CancelledBy {
 
 model Booking {
   id              String         @id @default(uuid())
+  bookingNumber   String?        @unique @map("booking_number")
   studentId       String         @map("student_id")
   tutorId         String         @map("tutor_profile_id")
   tutorSubjectId  String?        @map("tutor_subject_id")
@@ -300,17 +303,19 @@ model Booking {
   durationMinutes Int            @map("duration_minutes")
   locationType    LocationType?  @map("location_type")
   locationAddress String?        @map("location_address")
-  lat             Decimal?       @db.Decimal(10, 8)
-  lng             Decimal?       @db.Decimal(11, 8)
+  lat             Decimal?       
+  lng             Decimal?       
   meetingLink     String?        @map("meeting_link")
   status          BookingStatus  @default(draft)
   cancelledBy     CancelledBy?   @map("cancelled_by")
   cancelReason    String?        @map("cancel_reason")
-  price           Decimal        @db.Decimal(12, 2)
-  platformFee     Decimal        @map("platform_fee") @db.Decimal(12, 2)
-  totalAmount     Decimal        @map("total_amount") @db.Decimal(12, 2)
+  rescheduleReason String?       @map("reschedule_reason")
+  price           Decimal        
+  platformFee     Decimal        @map("platform_fee") 
+  totalAmount     Decimal        @map("total_amount") 
   currency        String         @default("IDR")
   notes           String?
+  completedAt     DateTime?      @map("completed_at")
   createdAt       DateTime       @default(now()) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
 
@@ -367,7 +372,7 @@ model PaymentTransaction {
   paymentMethod     String?         @map("payment_method")
   externalPaymentId String?         @map("external_payment_id")
   status            PaymentStatus   @default(pending)
-  amount            Decimal         @db.Decimal(12, 2)
+  amount            Decimal         
   currency          String          @default("IDR")
   paidAt            DateTime?       @map("paid_at")
   expiresAt         DateTime?       @map("expires_at")
@@ -386,7 +391,7 @@ model PaymentTransaction {
 model Wallet {
   id        String   @id @default(uuid())
   userId    String   @unique @map("user_id")
-  balance   Decimal  @default(0.0) @db.Decimal(12, 2)
+  balance   Decimal  @default(0.0) 
   currency  String   @default("IDR")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -410,7 +415,7 @@ model WalletLedgerEntry {
   id          String          @id @default(uuid())
   walletId    String          @map("wallet_id")
   type        LedgerEntryType
-  amount      Decimal         @db.Decimal(12, 2)
+  amount      Decimal         
   bookingId   String?         @map("booking_id")
   referenceId String?         @map("reference_id")
   meta        Json?
@@ -545,7 +550,7 @@ model LessonPackage {
   tutorSubjectId String?  @map("tutor_subject_id")
   name           String
   sessionCount   Int      @map("session_count")
-  totalPrice     Decimal  @map("total_price") @db.Decimal(12, 2)
+  totalPrice     Decimal  @map("total_price") 
   currency       String   @default("IDR")
   validDays      Int      @map("valid_days")
   isActive       Boolean  @default(true) @map("is_active")

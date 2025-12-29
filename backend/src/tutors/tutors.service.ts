@@ -258,7 +258,7 @@ export class TutorsService {
     }
 
     if (dto.minRating) {
-      where.averageRating = { gte: dto.minRating };
+      where.ratingAvg = { gte: dto.minRating };
     }
 
     // Full-text search
@@ -276,7 +276,7 @@ export class TutorsService {
     }
 
     // Build orderBy
-    let orderBy: any = { averageRating: 'desc' };
+    let orderBy: any = { ratingAvg: 'desc' };
 
     switch (dto.sortBy) {
       case SortBy.PRICE_LOW:
@@ -289,10 +289,10 @@ export class TutorsService {
         orderBy = { createdAt: 'desc' };
         break;
       case SortBy.EXPERIENCE:
-        orderBy = { totalStudents: 'desc' };
+        orderBy = { completedLessonsCount: 'desc' };
         break;
       default:
-        orderBy = { averageRating: 'desc' };
+        orderBy = { ratingAvg: 'desc' };
     }
 
     // Execute query
@@ -384,11 +384,11 @@ export class TutorsService {
     const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
     
     const totalEarnings = completedBookings.reduce((sum, booking) => {
-      return sum + booking.totalAmount;
+      return sum + Number(booking.totalAmount);
     }, 0);
 
     const pendingEarnings = confirmedBookings.reduce((sum, booking) => {
-      return sum + booking.totalAmount;
+      return sum + Number(booking.totalAmount);
     }, 0);
 
     // Platform takes 15% commission
@@ -404,23 +404,21 @@ export class TutorsService {
       where: {
         tutorId: tutorProfile.id,
         status: 'completed',
-        completedAt: {
+        createdAt: {
           gte: sixMonthsAgo,
         },
       },
       orderBy: {
-        completedAt: 'desc',
+        createdAt: 'desc',
       },
     });
 
     // Group by month
     const monthlyEarningsMap = new Map<string, number>();
     monthlyBookings.forEach(booking => {
-      if (booking.completedAt) {
-        const monthKey = booking.completedAt.toISOString().slice(0, 7); // YYYY-MM
-        const current = monthlyEarningsMap.get(monthKey) || 0;
-        monthlyEarningsMap.set(monthKey, current + booking.totalAmount);
-      }
+      const monthKey = booking.createdAt.toISOString().slice(0, 7); // YYYY-MM
+      const current = monthlyEarningsMap.get(monthKey) || 0;
+      monthlyEarningsMap.set(monthKey, current + Number(booking.totalAmount));
     });
 
     const monthlyEarnings = Array.from(monthlyEarningsMap.entries())
@@ -435,10 +433,9 @@ export class TutorsService {
       .slice(0, 10)
       .map(booking => ({
         id: booking.id,
-        amount: Math.round(booking.totalAmount * 0.85),
-        date: booking.completedAt,
+        amount: Math.round(Number(booking.totalAmount) * 0.85),
+        date: booking.createdAt,
         status: 'paid',
-        student: booking.student,
       }));
 
     return {
@@ -448,7 +445,7 @@ export class TutorsService {
       platformCommission: Math.round(platformCommission),
       netEarnings: Math.round(netEarnings),
       completedBookings: completedBookings.length,
-      totalStudents: tutorProfile.totalStudents,
+      totalStudents: tutorProfile.completedLessonsCount,
       monthlyEarnings,
       recentPayments,
     };

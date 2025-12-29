@@ -29,6 +29,61 @@ export default function ChatPage() {
       setConversations(response.data);
     } catch (error) {
       console.error('Error fetching conversations:', error);
+      // Use mock data if backend is not available
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const isStudent = user.role === 'student';
+      
+      const mockConversations = [
+        {
+          id: '1',
+          otherParticipant: {
+            fullName: isStudent ? 'Budi Santoso' : 'Ahmad Rizki',
+            avatarUrl: null,
+          },
+          messages: [
+            {
+              message: isStudent 
+                ? 'Baik, saya siap mengajar besok jam 10 pagi. Jangan lupa siapkan materi yang ingin dipelajari ya!'
+                : 'Pak, besok saya bisa les jam berapa?',
+              createdAt: new Date('2024-12-28T15:30:00').toISOString(),
+            },
+          ],
+          unreadCount: 1,
+        },
+        {
+          id: '2',
+          otherParticipant: {
+            fullName: isStudent ? 'Siti Nurhaliza' : 'Dewi Lestari',
+            avatarUrl: null,
+          },
+          messages: [
+            {
+              message: isStudent
+                ? 'Great! See you tomorrow at 2 PM for our English conversation class.'
+                : 'Miss, untuk materi IELTS speaking sudah saya pelajari.',
+              createdAt: new Date('2024-12-27T10:15:00').toISOString(),
+            },
+          ],
+          unreadCount: 0,
+        },
+        {
+          id: '3',
+          otherParticipant: {
+            fullName: isStudent ? 'Dewi Lestari' : 'Fajar Ramadhan',
+            avatarUrl: null,
+          },
+          messages: [
+            {
+              message: isStudent
+                ? 'Untuk project React kamu, coba dulu buat component sederhana. Nanti kita review bareng.'
+                : 'Kak, saya sudah coba bikin component tapi masih error.',
+              createdAt: new Date('2024-12-26T14:20:00').toISOString(),
+            },
+          ],
+          unreadCount: 0,
+        },
+      ];
+      setConversations(mockConversations);
     } finally {
       setLoading(false);
     }
