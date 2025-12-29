@@ -24,7 +24,7 @@ export class BookingsService {
       throw new NotFoundException('Tutor not found');
     }
 
-    if (tutor.verificationStatus !== 'verified') {
+    if (tutor.verificationStatus !== 'approved') {
       throw new BadRequestException('Tutor is not verified yet');
     }
 
@@ -50,15 +50,18 @@ export class BookingsService {
     }
 
     // Check if scheduled time is in the future
-    const scheduledAt = new Date(dto.scheduledAt);
-    if (scheduledAt <= new Date()) {
+    const startAt = new Date(dto.scheduledAt);
+    if (startAt <= new Date()) {
       throw new BadRequestException('Scheduled time must be in the future');
     }
+
+    // Calculate end time
+    const endAt = new Date(startAt.getTime() + dto.duration * 60 * 60 * 1000);
 
     // Check for conflicting bookings
     const conflictingBooking = await this.checkConflictingBookings(
       dto.tutorId,
-      scheduledAt,
+      startAt,
       dto.duration,
     );
 
@@ -68,24 +71,24 @@ export class BookingsService {
 
     // Calculate total amount
     const numberOfSessions = dto.numberOfSessions || 1;
-    const totalAmount = tutor.hourlyRate * dto.duration * numberOfSessions;
+    const durationMinutes = dto.duration * 60;
+    const totalAmount = Number(tutor.hourlyRate) * dto.duration * numberOfSessions;
 
     // Create booking
     const booking = await this.prisma.booking.create({
       data: {
-        studentId,
-        tutorId: dto.tutorId,
-        subjectId: dto.subjectId,
-        scheduledAt,
-        duration: dto.duration,
-        bookingType: dto.bookingType,
-        numberOfSessions,
-        completedSessions: 0,
+        student: { connect: { id: studentId } },
+        tutor: { connect: { id: dto.tutorId } },
+        tutorSubject: tutorSubject ? { connect: { id: tutorSubject.id } } : undefined,
+        startAt,
+        endAt,
+        durationMinutes,
+        price: tutor.hourlyRate,
+        platformFee: totalAmount * 0.1,
         totalAmount,
-        status: BookingStatus.pending,
+        status: 'pending_payment',
         notes: dto.notes,
-        location: dto.location,
-        teachingMethod: dto.teachingMethod,
+        locationAddress: dto.location,
       },
       include: {
         student: {
@@ -108,7 +111,6 @@ export class BookingsService {
             },
           },
         },
-        subject: true,
       },
     });
 
@@ -130,22 +132,22 @@ export class BookingsService {
     }
 
     // Can only update pending bookings
-    if (booking.status !== BookingStatus.pending) {
+    if (booking.status !== 'pending_payment') {
       throw new BadRequestException('Can only update pending bookings');
     }
 
     // If updating scheduled time, check for conflicts
     if (dto.scheduledAt) {
-      const newScheduledAt = new Date(dto.scheduledAt);
+      const newStartAt = new Date(dto.scheduledAt);
       
-      if (newScheduledAt <= new Date()) {
+      if (newStartAt <= new Date()) {
         throw new BadRequestException('Scheduled time must be in the future');
       }
 
       const conflictingBooking = await this.checkConflictingBookings(
         booking.tutorId,
-        newScheduledAt,
-        booking.duration,
+        newStartAt,
+        booking.durationMinutes / 60,
         bookingId,
       );
 
@@ -157,9 +159,10 @@ export class BookingsService {
     const updated = await this.prisma.booking.update({
       where: { id: bookingId },
       data: {
-        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+        startAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+        endAt: dto.scheduledAt ? new Date(new Date(dto.scheduledAt).getTime() + booking.durationMinutes * 60 * 1000) : undefined,
         notes: dto.notes,
-        location: dto.location,
+        locationAddress: dto.location,
       },
       include: {
         student: {
@@ -182,7 +185,6 @@ export class BookingsService {
             },
           },
         },
-        subject: true,
       },
     });
 
@@ -207,21 +209,23 @@ export class BookingsService {
     }
 
     // Can only cancel pending or confirmed bookings
-    if (![BookingStatus.pending, BookingStatus.confirmed].includes(booking.status)) {
+    if (!['pending_payment', 'confirmed'].includes(booking.status)) {
       throw new BadRequestException('Cannot cancel this booking');
     }
 
     // Check cancellation policy (24 hours before)
-    const hoursUntilBooking = (booking.scheduledAt.getTime() - new Date().getTime()) / (1000 * 60 * 60);
+    const hoursUntilBooking = (booking.startAt.getTime() - new Date().getTime()) / (1000 * 60 * 60);
     const isLateCancel = hoursUntilBooking < 24;
+
+    // Determine who cancelled
+    const cancelledBy = booking.studentId === userId ? 'student' : 'tutor';
 
     const cancelled = await this.prisma.booking.update({
       where: { id: bookingId },
       data: {
-        status: BookingStatus.cancelled,
-        cancellationReason: dto.cancellationReason,
-        cancelledAt: new Date(),
-        cancelledBy: userId,
+        status: 'cancelled',
+        cancelReason: dto.cancellationReason,
+        cancelledBy: cancelledBy as any,
       },
       include: {
         student: {
@@ -244,7 +248,6 @@ export class BookingsService {
             },
           },
         },
-        subject: true,
       },
     });
 
@@ -272,14 +275,14 @@ export class BookingsService {
       throw new ForbiddenException('Only the tutor can confirm this booking');
     }
 
-    if (booking.status !== BookingStatus.pending) {
+    if (booking.status !== 'pending_payment') {
       throw new BadRequestException('Can only confirm pending bookings');
     }
 
     const confirmed = await this.prisma.booking.update({
       where: { id: bookingId },
       data: {
-        status: BookingStatus.confirmed,
+        status: 'confirmed',
       },
       include: {
         student: {
@@ -302,7 +305,6 @@ export class BookingsService {
             },
           },
         },
-        subject: true,
       },
     });
 
@@ -326,15 +328,15 @@ export class BookingsService {
       throw new ForbiddenException('Only student or tutor can complete this booking');
     }
 
-    if (booking.status !== BookingStatus.confirmed) {
+    if (booking.status !== 'confirmed') {
       throw new BadRequestException('Can only complete confirmed bookings');
     }
 
     const completed = await this.prisma.booking.update({
       where: { id: bookingId },
       data: {
-        status: BookingStatus.completed,
-        completedSessions: booking.completedSessions + 1,
+        status: 'completed',
+        completedAt: new Date(),
       },
       include: {
         student: {
@@ -357,7 +359,6 @@ export class BookingsService {
             },
           },
         },
-        subject: true,
       },
     });
 
@@ -396,7 +397,6 @@ export class BookingsService {
             },
           },
         },
-        subject: true,
         payment: true,
       },
     });
@@ -405,8 +405,9 @@ export class BookingsService {
       throw new NotFoundException('Booking not found');
     }
 
-    // Check access rights
-    if (booking.studentId !== userId && booking.tutor.userId !== userId) {
+    // Check access rights - need to fetch tutor relation
+    const bookingWithTutor = booking as any;
+    if (booking.studentId !== userId && bookingWithTutor.tutor?.userId !== userId) {
       throw new ForbiddenException('You can only view your own bookings');
     }
 
@@ -432,7 +433,7 @@ export class BookingsService {
     const [bookings, total] = await Promise.all([
       this.prisma.booking.findMany({
         where,
-        orderBy: { scheduledAt: 'desc' },
+        orderBy: { startAt: 'desc' },
         skip,
         take: limit,
         include: {
@@ -456,7 +457,6 @@ export class BookingsService {
               },
             },
           },
-          subject: true,
         },
       }),
       this.prisma.booking.count({ where }),
@@ -486,14 +486,14 @@ export class BookingsService {
         tutorId,
         id: excludeBookingId ? { not: excludeBookingId } : undefined,
         status: {
-          in: [BookingStatus.pending, BookingStatus.confirmed],
+          in: ['pending_payment', 'confirmed'],
         },
         OR: [
           {
             AND: [
-              { scheduledAt: { lte: scheduledAt } },
+              { startAt: { lte: scheduledAt } },
               {
-                scheduledAt: {
+                startAt: {
                   gte: new Date(scheduledAt.getTime() - duration * 60 * 60 * 1000),
                 },
               },
@@ -501,8 +501,8 @@ export class BookingsService {
           },
           {
             AND: [
-              { scheduledAt: { gte: scheduledAt } },
-              { scheduledAt: { lt: endTime } },
+              { startAt: { gte: scheduledAt } },
+              { startAt: { lt: endTime } },
             ],
           },
         ],
