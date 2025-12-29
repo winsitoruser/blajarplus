@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import BannerCarousel from '@/components/BannerCarousel';
 import { bookingsApi, api } from '@/lib/api';
 
 export default function TutorDashboardPage() {
@@ -15,7 +16,7 @@ export default function TutorDashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect() => {
+  useEffect(() => {
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
@@ -81,6 +82,11 @@ export default function TutorDashboardPage() {
 
       <div className="flex-1 bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4">
+          {/* Banner Carousel - Dynamic from Admin */}
+          <div className="mb-8">
+            <BannerCarousel userRole="tutor" />
+          </div>
+
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Dashboard Tutor</h1>
             <p className="text-gray-600">Kelola booking dan lihat performa Anda</p>

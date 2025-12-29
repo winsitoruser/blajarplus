@@ -319,4 +319,14 @@ export class ChatService {
 
     return { message: 'Message deleted successfully' };
   }
+
+  async getTotalUnreadCount(userId: string): Promise<number> {
+    // Get all conversations for the user
+    const conversations = await this.getConversations(userId);
+    
+    // Sum up all unread counts
+    const totalUnread = conversations.reduce((sum, conv) => sum + conv.unreadCount, 0);
+    
+    return totalUnread;
+  }
 }

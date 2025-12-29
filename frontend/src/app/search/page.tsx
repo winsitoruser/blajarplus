@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, Clock, X, TrendingUp, Star, MapPin } from 'lucide-react';
+import BannerCarousel from '@/components/BannerCarousel';
 import api from '@/lib/api';
 
 export default function SearchPage() {
@@ -381,60 +382,9 @@ export default function SearchPage() {
 
       <div className="flex-1 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          {/* Banner Carousel - Smaller Height */}
-          <div className="mb-6 relative overflow-hidden rounded-xl shadow-lg">
-            <div className="relative h-40 md:h-48">
-              {banners.map((banner, index) => (
-                <div
-                  key={banner.id}
-                  className={`absolute inset-0 transition-all duration-500 ease-in-out ${
-                    index === currentBanner 
-                      ? 'opacity-100 translate-x-0' 
-                      : index < currentBanner 
-                        ? 'opacity-0 -translate-x-full' 
-                        : 'opacity-0 translate-x-full'
-                  }`}
-                >
-                  <div className={`w-full h-full bg-gradient-to-r ${banner.bgGradient} flex items-center justify-between px-6 md:px-12`}>
-                    <div className="text-white max-w-xl">
-                      <div className="text-4xl mb-2">{banner.icon}</div>
-                      <h2 className="text-2xl md:text-3xl font-bold mb-2">{banner.title}</h2>
-                      <p className="text-sm md:text-base text-white/90">{banner.subtitle}</p>
-                    </div>
-                    <div className="hidden md:block text-white/10 text-7xl font-bold">
-                      {banner.icon}
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              <button
-                onClick={prevBanner}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all"
-              >
-                <ChevronLeft className="w-4 h-4 text-white" />
-              </button>
-              <button
-                onClick={nextBanner}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all"
-              >
-                <ChevronRight className="w-4 h-4 text-white" />
-              </button>
-
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-                {banners.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentBanner(index)}
-                    className={`transition-all ${
-                      index === currentBanner
-                        ? 'w-6 h-2 bg-white'
-                        : 'w-2 h-2 bg-white/50 hover:bg-white/75'
-                    } rounded-full`}
-                  />
-                ))}
-              </div>
-            </div>
+          {/* Banner Carousel - Dynamic from Admin */}
+          <div className="mb-6">
+            <BannerCarousel userRole="all" />
           </div>
 
           <h1 className="text-3xl font-bold mb-6">Cari Tutor</h1>

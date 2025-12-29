@@ -16,13 +16,10 @@ export class UsersService {
         avatarUrl: true,
         gender: true,
         birthdate: true,
-        address: true,
-        city: true,
-        province: true,
-        bio: true,
         role: true,
         status: true,
         createdAt: true,
+        addresses: true,
       },
     });
   }
@@ -42,10 +39,6 @@ export class UsersService {
         avatarUrl: true,
         gender: true,
         birthdate: true,
-        address: true,
-        city: true,
-        province: true,
-        bio: true,
         role: true,
       },
     });

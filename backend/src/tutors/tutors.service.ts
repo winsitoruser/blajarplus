@@ -41,7 +41,7 @@ export class TutorsService {
         userId,
         bio: dto.bio,
         education: dto.education,
-        experienceYears: dto.experience ? parseInt(dto.experience) || 0 : 0,
+        experienceYears: dto.experienceYears || 0,
         hourlyRate: dto.hourlyRate,
         baseCity: dto.city,
         teachingModes: dto.teachingMethods || [],
@@ -120,7 +120,7 @@ export class TutorsService {
       data: {
         bio: dto.bio,
         education: dto.education,
-        experienceYears: dto.experience ? Number(dto.experience) : undefined,
+        experienceYears: dto.experienceYears,
         hourlyRate: dto.hourlyRate,
         baseCity: dto.city,
         teachingModes: dto.teachingMethods,

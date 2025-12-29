@@ -52,153 +52,184 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">Daftar di BlajarPlus</CardTitle>
-          <CardDescription className="text-center">
-            Buat akun baru untuk mulai belajar atau mengajar
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
-                {error}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            BlajarPlus
+          </h1>
+          <p className="text-gray-600 mt-2">Platform Belajar Online Terpercaya</p>
+        </div>
+
+        <Card className="shadow-xl">
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle className="text-2xl font-bold text-center">Daftar Akun</CardTitle>
+            <CardDescription className="text-center">
+              Buat akun baru untuk mulai belajar atau mengajar
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 block">Daftar sebagai</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, role: 'student' })}
+                    className={`p-3 border-2 rounded-lg text-center transition-all ${
+                      formData.role === 'student'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-semibold">🎓 Student</div>
+                    <div className="text-xs text-gray-500 mt-1">Saya ingin belajar</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, role: 'tutor' })}
+                    className={`p-3 border-2 rounded-lg text-center transition-all ${
+                      formData.role === 'tutor'
+                        ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="font-semibold">👨‍🏫 Tutor</div>
+                    <div className="text-xs text-gray-500 mt-1">Saya ingin mengajar</div>
+                  </button>
+                </div>
               </div>
-            )}
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Daftar sebagai</label>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, role: 'student' })}
-                  className={`p-3 border-2 rounded-lg text-center transition ${
-                    formData.role === 'student'
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="font-medium">Student</div>
-                  <div className="text-xs text-gray-500">Saya ingin belajar</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, role: 'tutor' })}
-                  className={`p-3 border-2 rounded-lg text-center transition ${
-                    formData.role === 'tutor'
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="font-medium">Tutor</div>
-                  <div className="text-xs text-gray-500">Saya ingin mengajar</div>
-                </button>
+              <div className="space-y-2">
+                <label htmlFor="fullName" className="text-sm font-medium text-gray-700 block">
+                  Nama Lengkap
+                </label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="John Doe"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  required
+                  className="w-full"
+                />
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label htmlFor="fullName" className="text-sm font-medium">
-                Nama Lengkap
-              </label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="John Doe"
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                required
-              />
-            </div>
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium text-gray-700 block">
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="email@example.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  className="w-full"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="email@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-              />
-            </div>
+              <div className="space-y-2">
+                <label htmlFor="phone" className="text-sm font-medium text-gray-700 block">
+                  Nomor Telepon <span className="text-gray-400 font-normal">(Opsional)</span>
+                </label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="08123456789"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label htmlFor="phone" className="text-sm font-medium">
-                Nomor Telepon (Opsional)
-              </label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="08123456789"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
-            </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label htmlFor="password" className="text-sm font-medium text-gray-700 block">
+                    Password
+                  </label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Min. 6 karakter"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    className="w-full"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Minimal 6 karakter"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required
-              />
-            </div>
+                <div className="space-y-2">
+                  <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700 block">
+                    Konfirmasi
+                  </label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Ulangi password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    required
+                    className="w-full"
+                  />
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="text-sm font-medium">
-                Konfirmasi Password
-              </label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Ulangi password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                required
-              />
-            </div>
+              <div className="flex items-start pt-2">
+                <input
+                  id="terms"
+                  type="checkbox"
+                  className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  required
+                />
+                <label htmlFor="terms" className="ml-2 block text-xs text-gray-600">
+                  Saya setuju dengan{' '}
+                  <Link href="/terms" className="text-blue-600 hover:text-blue-700 font-medium">
+                    Syarat & Ketentuan
+                  </Link>{' '}
+                  dan{' '}
+                  <Link href="/privacy" className="text-blue-600 hover:text-blue-700 font-medium">
+                    Kebijakan Privasi
+                  </Link>
+                </label>
+              </div>
 
-            <div className="flex items-start">
-              <input
-                id="terms"
-                type="checkbox"
-                className="h-4 w-4 mt-1 text-primary-500 focus:ring-primary-500 border-gray-300 rounded"
-                required
-              />
-              <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-                Saya setuju dengan{' '}
-                <Link href="/terms" className="text-primary-500 hover:text-primary-600">
-                  Syarat & Ketentuan
-                </Link>{' '}
-                dan{' '}
-                <Link href="/privacy" className="text-primary-500 hover:text-primary-600">
-                  Kebijakan Privasi
-                </Link>
-              </label>
-            </div>
+              <Button 
+                type="submit" 
+                className="w-full h-11 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium" 
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Memproses...
+                  </span>
+                ) : 'Daftar Sekarang'}
+              </Button>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Memproses...' : 'Daftar'}
-            </Button>
-
-            <p className="text-center text-sm text-gray-600">
-              Sudah punya akun?{' '}
-              <Link href="/login" className="text-primary-500 hover:text-primary-600 font-medium">
-                Masuk di sini
-              </Link>
-            </p>
-          </form>
-        </CardContent>
-      </Card>
+              <div className="text-center pt-4">
+                <p className="text-sm text-gray-600">
+                  Sudah punya akun?{' '}
+                  <Link href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
+                    Masuk di sini
+                  </Link>
+                </p>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

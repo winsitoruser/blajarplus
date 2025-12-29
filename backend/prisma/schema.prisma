@@ -749,3 +749,39 @@ model StudentMaterial {
   @@index([status])
   @@map("student_materials")
 }
+
+enum BannerType {
+  info
+  warning
+  success
+  promotion
+}
+
+enum BannerTarget {
+  all
+  student
+  tutor
+}
+
+model Banner {
+  id          String       @id @default(uuid())
+  title       String
+  description String?      @db.Text
+  imageUrl    String?      @map("image_url")
+  linkUrl     String?      @map("link_url")
+  type        BannerType   @default(info)
+  target      BannerTarget @default(all)
+  isActive    Boolean      @default(true) @map("is_active")
+  order       Int          @default(0)
+  startDate   DateTime?    @map("start_date")
+  endDate     DateTime?    @map("end_date")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@index([target])
+  @@index([order])
+  @@index([startDate])
+  @@index([endDate])
+  @@map("banners")
+}
