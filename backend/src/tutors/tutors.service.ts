@@ -41,13 +41,11 @@ export class TutorsService {
         userId,
         bio: dto.bio,
         education: dto.education,
-        experience: dto.experience,
+        experienceYears: dto.experienceYears || 0,
         hourlyRate: dto.hourlyRate,
-        city: dto.city,
-        province: dto.province,
-        teachingMethods: dto.teachingMethods,
-        teachingPreferences: dto.teachingPreferences,
-        educationLevels: dto.educationLevels,
+        baseCity: dto.city,
+        teachingModes: dto.teachingMethods,
+        headline: dto.headline,
         verificationStatus: 'pending',
       },
       include: {
@@ -67,8 +65,9 @@ export class TutorsService {
       subjects.map((subject) =>
         this.prisma.tutorSubject.create({
           data: {
-            tutorId: tutorProfile.id,
-            subjectId: subject.id,
+            tutor: { connect: { id: tutorProfile.id } },
+            subject: { connect: { id: subject.id } },
+            level: 'general',
           },
         }),
       ),
@@ -108,8 +107,9 @@ export class TutorsService {
         subjects.map((subject) =>
           this.prisma.tutorSubject.create({
             data: {
-              tutorId: tutorProfile.id,
-              subjectId: subject.id,
+              tutor: { connect: { id: tutorProfile.id } },
+              subject: { connect: { id: subject.id } },
+              level: 'general',
             },
           }),
         ),
@@ -122,13 +122,11 @@ export class TutorsService {
       data: {
         bio: dto.bio,
         education: dto.education,
-        experience: dto.experience,
+        experienceYears: dto.experienceYears,
         hourlyRate: dto.hourlyRate,
-        city: dto.city,
-        province: dto.province,
-        teachingMethods: dto.teachingMethods,
-        teachingPreferences: dto.teachingPreferences,
-        educationLevels: dto.educationLevels,
+        baseCity: dto.city,
+        teachingModes: dto.teachingMethods,
+        headline: dto.headline,
       },
     });
 
@@ -160,7 +158,7 @@ export class TutorsService {
           take: 5,
           orderBy: { createdAt: 'desc' },
           include: {
-            student: {
+            author: {
               select: {
                 fullName: true,
                 avatarUrl: true,
@@ -175,9 +173,13 @@ export class TutorsService {
       throw new NotFoundException('Tutor not found');
     }
 
+    // Map subjects relation to subject objects
+    const tutorWithSubjects = tutor as any;
+    const subjects = tutorWithSubjects.subjects?.map((ts: any) => ts.subject) || [];
+
     return {
       ...tutor,
-      subjects: tutor.subjects.map((ts) => ts.subject),
+      subjects,
     };
   }
 
@@ -209,9 +211,13 @@ export class TutorsService {
       throw new NotFoundException('Tutor profile not found');
     }
 
+    // Map subjects relation to subject objects
+    const profileWithSubjects = tutorProfile as any;
+    const subjects = profileWithSubjects.subjects?.map((ts: any) => ts.subject) || [];
+
     return {
       ...tutorProfile,
-      subjects: tutorProfile.subjects.map((ts) => ts.subject),
+      subjects,
     };
   }
 
