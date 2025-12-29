@@ -630,86 +630,150 @@ export default function TutorDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 py-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Dashboard Tutor</h1>
-            <p className="text-gray-600">Kelola layanan, testimonial, dan keuangan Anda</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent">
+                  Dashboard Tutor
+                </h1>
+                <p className="text-gray-600 text-lg">Kelola layanan, testimonial, dan keuangan Anda</p>
+              </div>
+              <div className="hidden md:flex items-center gap-4">
+                <div className="text-right">
+                  <div className="text-sm text-gray-600">Selamat datang kembali,</div>
+                  <div className="font-semibold text-lg">{user?.fullName}</div>
+                </div>
+                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                  {user?.fullName?.charAt(0)}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
               <CardContent className="p-6">
-                <div className="text-sm text-gray-600 mb-1">Total Booking</div>
-                <div className="text-3xl font-bold">{stats.totalBookings}</div>
-                <div className="text-sm text-green-600 mt-1">+5 bulan ini</div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <span className="text-2xl">📚</span>
+                  </div>
+                  <div className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">
+                    +5 bulan ini
+                  </div>
+                </div>
+                <div className="text-sm text-gray-600 mb-1 font-medium">Total Booking</div>
+                <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                  {stats.totalBookings}
+                </div>
               </CardContent>
             </Card>
-            <Card>
+            
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
               <CardContent className="p-6">
-                <div className="text-sm text-gray-600 mb-1">Total Pendapatan</div>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <span className="text-2xl">💰</span>
+                  </div>
+                  <div className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full font-medium">
+                    Semua waktu
+                  </div>
+                </div>
+                <div className="text-sm text-gray-600 mb-1 font-medium">Total Pendapatan</div>
+                <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                   Rp {stats.totalEarnings.toLocaleString('id-ID')}
                 </div>
-                <div className="text-sm text-gray-500 mt-1">Semua waktu</div>
               </CardContent>
             </Card>
-            <Card>
+            
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
               <CardContent className="p-6">
-                <div className="text-sm text-gray-600 mb-1">Siswa Aktif</div>
-                <div className="text-3xl font-bold text-blue-600">{stats.activeStudents}</div>
-                <div className="text-sm text-gray-500 mt-1">Bulan ini</div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <span className="text-2xl">👥</span>
+                  </div>
+                  <div className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
+                    Bulan ini
+                  </div>
+                </div>
+                <div className="text-sm text-gray-600 mb-1 font-medium">Siswa Aktif</div>
+                <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">
+                  {stats.activeStudents}
+                </div>
               </CardContent>
             </Card>
-            <Card>
+            
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
               <CardContent className="p-6">
-                <div className="text-sm text-gray-600 mb-1">Sesi Selesai</div>
-                <div className="text-3xl font-bold text-purple-600">{stats.completedSessions}</div>
-                <div className="text-sm text-gray-500 mt-1">Total</div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <span className="text-2xl">✅</span>
+                  </div>
+                  <div className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded-full font-medium">
+                    Total
+                  </div>
+                </div>
+                <div className="text-sm text-gray-600 mb-1 font-medium">Sesi Selesai</div>
+                <div className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-700 bg-clip-text text-transparent">
+                  {stats.completedSessions}
+                </div>
               </CardContent>
             </Card>
           </div>
 
           {/* Tabs */}
-          <div className="mb-6 border-b">
-            <div className="flex gap-6">
+          <div className="mb-6 bg-white rounded-xl shadow-sm p-2">
+            <div className="flex gap-2">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`pb-3 px-1 font-medium transition ${
+                className={`flex-1 py-3 px-4 font-medium rounded-lg transition-all duration-200 ${
                   activeTab === 'overview'
-                    ? 'border-b-2 border-primary-500 text-primary-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                📊 Overview
+                <span className="flex items-center justify-center gap-2">
+                  <span>📊</span>
+                  <span className="hidden sm:inline">Overview</span>
+                </span>
               </button>
               <button
                 onClick={() => setActiveTab('services')}
-                className={`pb-3 px-1 font-medium transition ${
+                className={`flex-1 py-3 px-4 font-medium rounded-lg transition-all duration-200 ${
                   activeTab === 'services'
-                    ? 'border-b-2 border-primary-500 text-primary-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                📚 Layanan/Kelas
+                <span className="flex items-center justify-center gap-2">
+                  <span>📚</span>
+                  <span className="hidden sm:inline">Layanan</span>
+                </span>
               </button>
               <button
                 onClick={() => setActiveTab('testimonials')}
-                className={`pb-3 px-1 font-medium transition ${
+                className={`flex-1 py-3 px-4 font-medium rounded-lg transition-all duration-200 ${
                   activeTab === 'testimonials'
-                    ? 'border-b-2 border-primary-500 text-primary-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                ⭐ Testimonial
+                <span className="flex items-center justify-center gap-2">
+                  <span>⭐</span>
+                  <span className="hidden sm:inline">Testimonial</span>
+                </span>
               </button>
               <button
                 onClick={() => setActiveTab('wallet')}
-                className={`pb-3 px-1 font-medium transition ${
+                className={`flex-1 py-3 px-4 font-medium rounded-lg transition-all duration-200 ${
                   activeTab === 'wallet'
-                    ? 'border-b-2 border-primary-500 text-primary-600'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
-                💰 Saldo & Penarikan
+                <span className="flex items-center justify-center gap-2">
+                  <span>💰</span>
+                  <span className="hidden sm:inline">Saldo</span>
+                </span>
               </button>
             </div>
           </div>
