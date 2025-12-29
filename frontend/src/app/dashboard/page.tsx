@@ -24,7 +24,14 @@ export default function DashboardPage() {
 
     const userData = localStorage.getItem('user');
     if (userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      
+      // Redirect tutor to tutor dashboard
+      if (parsedUser.role === 'tutor') {
+        router.push('/dashboard/tutor');
+        return;
+      }
     }
 
     fetchBookings();
