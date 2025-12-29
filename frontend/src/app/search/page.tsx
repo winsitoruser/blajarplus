@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { ChevronLeft, ChevronRight, Clock, X, TrendingUp, Star, MapPin } from 'lucide-react';
 import api from '@/lib/api';
 
 export default function SearchPage() {
@@ -26,11 +27,120 @@ export default function SearchPage() {
     sortBy: 'rating',
   });
   const [subjects, setSubjects] = useState([]);
+  
+  // Carousel state
+  const [currentBanner, setCurrentBanner] = useState(0);
+  
+  // Search history and recommendations
+  const [searchHistory, setSearchHistory] = useState([]);
+  const [recommendations, setRecommendations] = useState({ preferences: { subjects: [], levels: [] }, tutors: [] });
+  const [showHistory, setShowHistory] = useState(true);
+  
+  // Banner data for search page (smaller)
+  const banners = [
+    {
+      id: 1,
+      title: 'Temukan Tutor Terbaik!',
+      subtitle: 'Ribuan tutor profesional siap membantu',
+      bgGradient: 'from-blue-500 to-cyan-600',
+      icon: '🎓'
+    },
+    {
+      id: 2,
+      title: 'Belajar Lebih Mudah',
+      subtitle: 'Pilih jadwal dan lokasi sesuai keinginan',
+      bgGradient: 'from-purple-500 to-indigo-600',
+      icon: '📅'
+    },
+    {
+      id: 3,
+      title: 'Harga Terjangkau',
+      subtitle: 'Mulai dari Rp 50.000 per jam',
+      bgGradient: 'from-green-500 to-emerald-600',
+      icon: '💰'
+    }
+  ];
 
   useEffect(() => {
     fetchSubjects();
     searchTutors();
+    fetchSearchHistory();
+    fetchRecommendations();
   }, []);
+
+  // Auto-play carousel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % banners.length);
+    }, 4000); // Change banner every 4 seconds
+
+    return () => clearInterval(interval);
+  }, [banners.length]);
+
+  const nextBanner = () => {
+    setCurrentBanner((prev) => (prev + 1) % banners.length);
+  };
+
+  const prevBanner = () => {
+    setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length);
+  };
+
+  const fetchSearchHistory = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      const response = await api.get('/search/history?limit=5');
+      setSearchHistory(response.data);
+    } catch (error) {
+      console.error('Error fetching search history:', error);
+    }
+  };
+
+  const fetchRecommendations = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      const response = await api.get('/search/recommendations');
+      setRecommendations(response.data);
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+    }
+  };
+
+  const saveSearchToHistory = async (searchData: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      await api.post('/search/history', searchData);
+      fetchSearchHistory(); // Refresh history
+    } catch (error) {
+      console.error('Error saving search history:', error);
+    }
+  };
+
+  const deleteSearchHistoryItem = async (id: string) => {
+    try {
+      await api.delete(`/search/history/${id}`);
+      setSearchHistory(searchHistory.filter((item: any) => item.id !== id));
+    } catch (error) {
+      console.error('Error deleting search history:', error);
+    }
+  };
+
+  const applyHistorySearch = (history: any) => {
+    setFilters({
+      q: history.query || '',
+      subject: history.subject || '',
+      city: history.location || '',
+      minPrice: '',
+      maxPrice: '',
+      sortBy: 'rating',
+    });
+    searchTutors();
+  };
 
   useEffect(() => {
     // Load more tutors when page changes
@@ -271,7 +381,144 @@ export default function SearchPage() {
 
       <div className="flex-1 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-8">Cari Tutor</h1>
+          {/* Banner Carousel - Smaller Height */}
+          <div className="mb-6 relative overflow-hidden rounded-xl shadow-lg">
+            <div className="relative h-40 md:h-48">
+              {banners.map((banner, index) => (
+                <div
+                  key={banner.id}
+                  className={`absolute inset-0 transition-all duration-500 ease-in-out ${
+                    index === currentBanner 
+                      ? 'opacity-100 translate-x-0' 
+                      : index < currentBanner 
+                        ? 'opacity-0 -translate-x-full' 
+                        : 'opacity-0 translate-x-full'
+                  }`}
+                >
+                  <div className={`w-full h-full bg-gradient-to-r ${banner.bgGradient} flex items-center justify-between px-6 md:px-12`}>
+                    <div className="text-white max-w-xl">
+                      <div className="text-4xl mb-2">{banner.icon}</div>
+                      <h2 className="text-2xl md:text-3xl font-bold mb-2">{banner.title}</h2>
+                      <p className="text-sm md:text-base text-white/90">{banner.subtitle}</p>
+                    </div>
+                    <div className="hidden md:block text-white/10 text-7xl font-bold">
+                      {banner.icon}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                onClick={prevBanner}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all"
+              >
+                <ChevronLeft className="w-4 h-4 text-white" />
+              </button>
+              <button
+                onClick={nextBanner}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all"
+              >
+                <ChevronRight className="w-4 h-4 text-white" />
+              </button>
+
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {banners.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentBanner(index)}
+                    className={`transition-all ${
+                      index === currentBanner
+                        ? 'w-6 h-2 bg-white'
+                        : 'w-2 h-2 bg-white/50 hover:bg-white/75'
+                    } rounded-full`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <h1 className="text-3xl font-bold mb-6">Cari Tutor</h1>
+
+          {/* Search History & Recommendations */}
+          {(searchHistory.length > 0 || recommendations.tutors.length > 0) && (
+            <div className="mb-6 space-y-4">
+              {/* Search History */}
+              {searchHistory.length > 0 && showHistory && (
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        Pencarian Terakhir
+                      </h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowHistory(false)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {searchHistory.map((history: any) => (
+                        <div
+                          key={history.id}
+                          className="group flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-full text-sm cursor-pointer transition-colors"
+                          onClick={() => applyHistorySearch(history)}
+                        >
+                          <span>{history.query}</span>
+                          {history.subject && <span className="text-gray-500">• {history.subject}</span>}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteSearchHistoryItem(history.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3 text-gray-500 hover:text-red-500" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Recommendations */}
+              {recommendations.tutors.length > 0 && (
+                <Card>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold flex items-center gap-2 mb-3">
+                      <TrendingUp className="w-4 h-4" />
+                      Rekomendasi Untuk Anda
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                      {recommendations.tutors.slice(0, 6).map((tutor: any) => (
+                        <Link
+                          key={tutor.id}
+                          href={`/tutor/${tutor.userId}`}
+                          className="flex flex-col items-center p-3 bg-white hover:bg-gray-50 rounded-lg border border-gray-200 transition-colors"
+                        >
+                          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold mb-2">
+                            {tutor.avatarUrl ? (
+                              <img src={tutor.avatarUrl} alt={tutor.fullName} className="w-full h-full rounded-full object-cover" />
+                            ) : (
+                              tutor.fullName?.charAt(0) || 'T'
+                            )}
+                          </div>
+                          <p className="text-xs font-medium text-center line-clamp-1">{tutor.fullName}</p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                            <span className="text-xs text-gray-600">{tutor.rating.toFixed(1)}</span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Filters Sidebar */}

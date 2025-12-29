@@ -29,7 +29,8 @@ export default function CreateTutorProfilePage() {
   });
 
   const educationLevelOptions = [
-    'SD', 'SMP', 'SMA', 'Kuliah', 'Umum'
+    'SD', 'SMP', 'SMA', 'Universitas', 'Pemula', 'Dasar', 'Menengah', 'Lanjutan', 
+    'Basic', 'Intermediate', 'Advanced', 'Premium', 'Professional', 'Umum'
   ];
 
   const teachingMethodOptions = [

@@ -2,6 +2,11 @@ import { IsString, IsOptional, IsArray, IsNumber, Min, Max } from 'class-validat
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTutorProfileDto {
+  @ApiProperty({ example: 'Guru Matematika Berpengalaman' })
+  @IsString()
+  @IsOptional()
+  headline?: string;
+
   @ApiProperty({ example: 'Saya adalah guru matematika berpengalaman 5 tahun' })
   @IsString()
   bio: string;
@@ -10,20 +15,15 @@ export class CreateTutorProfileDto {
   @IsString()
   education: string;
 
-  @ApiProperty({ example: '5 tahun mengajar di sekolah swasta' })
-  @IsString()
+  @ApiProperty({ example: 5, description: 'Years of teaching experience' })
+  @IsNumber()
   @IsOptional()
-  experience?: string;
+  experienceYears?: number;
 
   @ApiProperty({ example: ['Matematika', 'Fisika'] })
   @IsArray()
   @IsString({ each: true })
   subjects: string[];
-
-  @ApiProperty({ example: ['SD', 'SMP', 'SMA'] })
-  @IsArray()
-  @IsString({ each: true })
-  educationLevels: string[];
 
   @ApiProperty({ example: 100000, description: 'Hourly rate in IDR' })
   @IsNumber()
@@ -34,17 +34,8 @@ export class CreateTutorProfileDto {
   @IsString()
   city: string;
 
-  @ApiProperty({ example: 'DKI Jakarta' })
-  @IsString()
-  province: string;
-
   @ApiProperty({ example: ['online', 'offline'] })
   @IsArray()
   @IsString({ each: true })
   teachingMethods: string[];
-
-  @ApiProperty({ example: 'Saya bisa mengajar di rumah siswa atau di tempat umum' })
-  @IsString()
-  @IsOptional()
-  teachingPreferences?: string;
 }
