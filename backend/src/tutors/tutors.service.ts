@@ -41,13 +41,10 @@ export class TutorsService {
         userId,
         bio: dto.bio,
         education: dto.education,
-        experience: dto.experience,
+        experienceYears: dto.experience ? parseInt(dto.experience) || 0 : 0,
         hourlyRate: dto.hourlyRate,
-        city: dto.city,
-        province: dto.province,
-        teachingMethods: dto.teachingMethods,
-        teachingPreferences: dto.teachingPreferences,
-        educationLevels: dto.educationLevels,
+        baseCity: dto.city,
+        teachingModes: dto.teachingMethods || [],
         verificationStatus: 'pending',
       },
       include: {
@@ -67,8 +64,9 @@ export class TutorsService {
       subjects.map((subject) =>
         this.prisma.tutorSubject.create({
           data: {
-            tutorId: tutorProfile.id,
-            subjectId: subject.id,
+            tutor: { connect: { id: tutorProfile.id } },
+            subject: { connect: { id: subject.id } },
+            level: 'general',
           },
         }),
       ),
@@ -103,13 +101,13 @@ export class TutorsService {
         where: { tutorId: tutorProfile.id },
       });
 
-      // Create new relationships
       await Promise.all(
         subjects.map((subject) =>
           this.prisma.tutorSubject.create({
             data: {
-              tutorId: tutorProfile.id,
-              subjectId: subject.id,
+              tutor: { connect: { id: tutorProfile.id } },
+              subject: { connect: { id: subject.id } },
+              level: 'general',
             },
           }),
         ),
@@ -122,13 +120,10 @@ export class TutorsService {
       data: {
         bio: dto.bio,
         education: dto.education,
-        experience: dto.experience,
+        experienceYears: dto.experience ? Number(dto.experience) : undefined,
         hourlyRate: dto.hourlyRate,
-        city: dto.city,
-        province: dto.province,
-        teachingMethods: dto.teachingMethods,
-        teachingPreferences: dto.teachingPreferences,
-        educationLevels: dto.educationLevels,
+        baseCity: dto.city,
+        teachingModes: dto.teachingMethods,
       },
     });
 
@@ -157,16 +152,17 @@ export class TutorsService {
           },
         },
         reviews: {
-          take: 5,
-          orderBy: { createdAt: 'desc' },
           include: {
-            student: {
+            author: {
               select: {
+                id: true,
                 fullName: true,
                 avatarUrl: true,
               },
             },
           },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
         },
       },
     });
@@ -312,12 +308,21 @@ export class TutorsService {
           },
           subjects: {
             include: {
-              subject: {
-                include: {
-                  category: true,
+              subject: true,
+            },
+          },
+          reviews: {
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  avatarUrl: true,
                 },
               },
             },
+            orderBy: { createdAt: 'desc' },
+            take: 10,
           },
         },
       }),
@@ -449,5 +454,56 @@ export class TutorsService {
       monthlyEarnings,
       recentPayments,
     };
+  }
+
+  // Availability Management (stub methods)
+  async createAvailability(userId: string, dto: any) {
+    throw new BadRequestException('Method not implemented yet');
+  }
+
+  async getMyAvailability(userId: string) {
+    return [];
+  }
+
+  async updateAvailability(userId: string, id: string, dto: any) {
+    throw new BadRequestException('Method not implemented yet');
+  }
+
+  async deleteAvailability(userId: string, id: string) {
+    throw new BadRequestException('Method not implemented yet');
+  }
+
+  // Time Off Management (stub methods)
+  async createTimeOff(userId: string, dto: any) {
+    throw new BadRequestException('Method not implemented yet');
+  }
+
+  async getMyTimeOffs(userId: string) {
+    return [];
+  }
+
+  async deleteTimeOff(userId: string, id: string) {
+    throw new BadRequestException('Method not implemented yet');
+  }
+
+  async getAvailableSlots(tutorId: string, date: string) {
+    return [];
+  }
+
+  // Syllabus Management (stub methods)
+  async createSyllabus(userId: string, dto: any) {
+    throw new BadRequestException('Method not implemented yet');
+  }
+
+  async getMySyllabi(userId: string) {
+    return [];
+  }
+
+  async updateSyllabus(userId: string, id: string, dto: any) {
+    throw new BadRequestException('Method not implemented yet');
+  }
+
+  async deleteSyllabus(userId: string, id: string) {
+    throw new BadRequestException('Method not implemented yet');
   }
 }

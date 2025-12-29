@@ -34,7 +34,11 @@ export class PaymentsService {
             user: true,
           },
         },
-        subject: true,
+        tutorSubject: {
+          include: {
+            subject: true,
+          },
+        },
       },
     });
 
@@ -46,9 +50,9 @@ export class PaymentsService {
       throw new ForbiddenException('You can only pay for your own bookings');
     }
 
-    // Check if booking is pending
-    if (booking.status !== 'pending') {
-      throw new BadRequestException('Can only pay for pending bookings');
+    // Check if booking is pending payment
+    if (booking.status !== 'pending_payment' && booking.status !== 'draft') {
+      throw new BadRequestException('Can only pay for pending payment bookings');
     }
 
     // Check if payment already exists
@@ -73,7 +77,8 @@ export class PaymentsService {
         amount: booking.totalAmount,
         paymentMethod: dto.paymentMethod,
         status: 'pending',
-        orderId,
+        provider: 'midtrans',
+        externalPaymentId: orderId,
       },
       include: {
         booking: {
@@ -84,7 +89,11 @@ export class PaymentsService {
                 user: true,
               },
             },
+            tutorSubject: {
+          include: {
             subject: true,
+          },
+        },
           },
         },
       },
@@ -94,7 +103,7 @@ export class PaymentsService {
     const midtransPayload = {
       transaction_details: {
         order_id: orderId,
-        gross_amount: booking.totalAmount,
+        gross_amount: Number(booking.totalAmount),
       },
       customer_details: {
         first_name: booking.student.fullName,
@@ -103,10 +112,10 @@ export class PaymentsService {
       },
       item_details: [
         {
-          id: booking.subject.id,
-          price: booking.totalAmount,
+          id: booking.tutorSubject.subject.id,
+          price: Number(booking.totalAmount),
           quantity: 1,
-          name: `Les ${booking.subject.name} dengan ${booking.tutor.user.fullName}`,
+          name: `Les ${booking.tutorSubject.subject.name} dengan ${booking.tutor.user.fullName}`,
         },
       ],
       callbacks: {
@@ -118,10 +127,10 @@ export class PaymentsService {
       // Call Midtrans Snap API
       const snapToken = await this.createMidtransTransaction(midtransPayload);
 
-      // Update payment with snap token
+      // Update payment with snap token (store in rawPayload)
       await this.prisma.paymentTransaction.update({
         where: { id: payment.id },
-        data: { snapToken },
+        data: { rawPayload: { snapToken } },
       });
 
       return {
@@ -146,8 +155,8 @@ export class PaymentsService {
     }
 
     // Find payment by order ID
-    const payment = await this.prisma.paymentTransaction.findUnique({
-      where: { orderId: dto.order_id },
+    const payment = await this.prisma.paymentTransaction.findFirst({
+      where: { externalPaymentId: dto.order_id },
       include: {
         booking: true,
       },
@@ -187,12 +196,12 @@ export class PaymentsService {
       data: {
         status: newStatus,
         paidAt: newStatus === 'paid' ? new Date() : null,
-        midtransTransactionId: dto.transaction_id,
+        externalPaymentId: dto.transaction_id,
       },
     });
 
     // Update booking status if payment is successful
-    if (newStatus === 'paid' && payment.booking.status === 'pending') {
+    if (newStatus === 'paid' && payment.booking.status === 'pending_payment') {
       await this.prisma.booking.update({
         where: { id: payment.bookingId },
         data: { status: bookingStatus },
@@ -200,7 +209,7 @@ export class PaymentsService {
     }
 
     // If payment failed, cancel booking
-    if (newStatus === 'failed' && payment.booking.status === 'pending') {
+    if (newStatus === 'failed' && payment.booking.status === 'pending_payment') {
       await this.prisma.booking.update({
         where: { id: payment.bookingId },
         data: { status: 'cancelled' },
@@ -222,7 +231,11 @@ export class PaymentsService {
                 user: true,
               },
             },
+            tutorSubject: {
+          include: {
             subject: true,
+          },
+        },
           },
         },
       },
@@ -233,16 +246,16 @@ export class PaymentsService {
     }
 
     // Check access rights
-    if (payment.booking.studentId !== userId && payment.booking.tutor.userId !== userId) {
+    if (payment.booking.studentId !== userId && payment.booking.tutorId !== payment.booking.tutor?.id) {
       throw new ForbiddenException('You can only view your own payments');
     }
 
     return payment;
   }
 
-  async getPaymentByOrderId(orderId: string) {
-    const payment = await this.prisma.paymentTransaction.findUnique({
-      where: { orderId },
+  async getPaymentByOrderId(externalPaymentId: string) {
+    const payment = await this.prisma.paymentTransaction.findFirst({
+      where: { externalPaymentId },
       include: {
         booking: {
           include: {
@@ -252,7 +265,11 @@ export class PaymentsService {
                 user: true,
               },
             },
-            subject: true,
+            tutorSubject: {
+              include: {
+                subject: true,
+              },
+            },
           },
         },
       },
@@ -293,7 +310,7 @@ export class PaymentsService {
     const updated = await this.prisma.paymentTransaction.update({
       where: { id: paymentId },
       data: {
-        status: 'refund_pending',
+        status: 'pending',
       },
       include: {
         booking: {

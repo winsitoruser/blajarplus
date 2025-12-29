@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
+import SubjectQuickSearch from '@/components/SubjectQuickSearch';
 
 export default function Home() {
   return (
@@ -92,6 +93,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Subject Quick Search */}
+      <SubjectQuickSearch />
 
       {/* Features Section */}
       <section className="py-20 bg-white">

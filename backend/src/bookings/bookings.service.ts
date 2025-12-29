@@ -1,17 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto, UpdateBookingDto, CancelBookingDto, QueryBookingDto } from './dto';
-import { BookingStatus } from '@prisma/client';
+import { BookingStatus, CancelledBy } from '@prisma/client';
 
 @Injectable()
 export class BookingsService {
   constructor(private prisma: PrismaService) {}
-
-  private generateBookingNumber(): string {
-    const year = new Date().getFullYear();
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `BKG-${year}-${random}`;
-  }
 
   async createBooking(studentId: string, dto: CreateBookingDto) {
     // Verify tutor exists and is verified
@@ -24,7 +18,7 @@ export class BookingsService {
       throw new NotFoundException('Tutor not found');
     }
 
-    if (tutor.verificationStatus !== 'verified') {
+    if (!tutor.isVerified) {
       throw new BadRequestException('Tutor is not verified yet');
     }
 
@@ -50,16 +44,20 @@ export class BookingsService {
     }
 
     // Check if scheduled time is in the future
-    const scheduledAt = new Date(dto.scheduledAt);
-    if (scheduledAt <= new Date()) {
+    const startAt = new Date(dto.scheduledAt);
+    if (startAt <= new Date()) {
       throw new BadRequestException('Scheduled time must be in the future');
     }
+
+    // Calculate end time
+    const durationMinutes = dto.duration * 60;
+    const endAt = new Date(startAt.getTime() + durationMinutes * 60 * 1000);
 
     // Check for conflicting bookings
     const conflictingBooking = await this.checkConflictingBookings(
       dto.tutorId,
-      scheduledAt,
-      dto.duration,
+      startAt,
+      durationMinutes,
     );
 
     if (conflictingBooking) {
@@ -67,25 +65,27 @@ export class BookingsService {
     }
 
     // Calculate total amount
-    const numberOfSessions = dto.numberOfSessions || 1;
-    const totalAmount = tutor.hourlyRate * dto.duration * numberOfSessions;
+    const hourlyRateNum = Number(tutor.hourlyRate);
+    const price = hourlyRateNum * dto.duration;
+    const platformFee = price * 0.1;
+    const totalAmount = price + platformFee;
 
     // Create booking
     const booking = await this.prisma.booking.create({
       data: {
         studentId,
         tutorId: dto.tutorId,
-        subjectId: dto.subjectId,
-        scheduledAt,
-        duration: dto.duration,
-        bookingType: dto.bookingType,
-        numberOfSessions,
-        completedSessions: 0,
+        tutorSubjectId: tutorSubject.id,
+        startAt,
+        endAt,
+        durationMinutes,
+        price,
+        platformFee,
         totalAmount,
-        status: BookingStatus.pending,
+        status: BookingStatus.pending_payment,
         notes: dto.notes,
-        location: dto.location,
-        teachingMethod: dto.teachingMethod,
+        locationAddress: dto.location,
+        locationType: dto.teachingMethod === 'online' ? 'online' : 'student_place',
       },
       include: {
         student: {
@@ -108,7 +108,11 @@ export class BookingsService {
             },
           },
         },
-        subject: true,
+        tutorSubject: {
+          include: {
+            subject: true,
+          },
+        },
       },
     });
 
@@ -129,23 +133,28 @@ export class BookingsService {
       throw new ForbiddenException('You can only update your own bookings');
     }
 
-    // Can only update pending bookings
-    if (booking.status !== BookingStatus.pending) {
-      throw new BadRequestException('Can only update pending bookings');
+    // Can only update draft or pending_payment bookings
+    if (booking.status !== BookingStatus.draft && booking.status !== BookingStatus.pending_payment) {
+      throw new BadRequestException('Can only update draft or pending bookings');
     }
 
     // If updating scheduled time, check for conflicts
+    let startAt = booking.startAt;
+    let endAt = booking.endAt;
+    
     if (dto.scheduledAt) {
-      const newScheduledAt = new Date(dto.scheduledAt);
+      startAt = new Date(dto.scheduledAt);
       
-      if (newScheduledAt <= new Date()) {
+      if (startAt <= new Date()) {
         throw new BadRequestException('Scheduled time must be in the future');
       }
 
+      endAt = new Date(startAt.getTime() + booking.durationMinutes * 60 * 1000);
+
       const conflictingBooking = await this.checkConflictingBookings(
         booking.tutorId,
-        newScheduledAt,
-        booking.duration,
+        startAt,
+        booking.durationMinutes,
         bookingId,
       );
 
@@ -157,9 +166,10 @@ export class BookingsService {
     const updated = await this.prisma.booking.update({
       where: { id: bookingId },
       data: {
-        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+        startAt: dto.scheduledAt ? startAt : undefined,
+        endAt: dto.scheduledAt ? endAt : undefined,
         notes: dto.notes,
-        location: dto.location,
+        locationAddress: dto.location,
       },
       include: {
         student: {
@@ -182,7 +192,11 @@ export class BookingsService {
             },
           },
         },
-        subject: true,
+        tutorSubject: {
+          include: {
+            subject: true,
+          },
+        },
       },
     });
 
@@ -206,22 +220,27 @@ export class BookingsService {
       throw new ForbiddenException('You can only cancel your own bookings');
     }
 
-    // Can only cancel pending or confirmed bookings
-    if (![BookingStatus.pending, BookingStatus.confirmed].includes(booking.status)) {
+    // Can only cancel pending_payment or confirmed bookings
+    if (booking.status !== BookingStatus.pending_payment && booking.status !== BookingStatus.confirmed) {
       throw new BadRequestException('Cannot cancel this booking');
     }
 
     // Check cancellation policy (24 hours before)
-    const hoursUntilBooking = (booking.scheduledAt.getTime() - new Date().getTime()) / (1000 * 60 * 60);
+    const hoursUntilBooking = (booking.startAt.getTime() - new Date().getTime()) / (1000 * 60 * 60);
     const isLateCancel = hoursUntilBooking < 24;
+
+    // Determine who cancelled
+    let cancelledBy: CancelledBy = 'student';
+    if (booking.tutor.userId === userId) {
+      cancelledBy = 'tutor';
+    }
 
     const cancelled = await this.prisma.booking.update({
       where: { id: bookingId },
       data: {
         status: BookingStatus.cancelled,
-        cancellationReason: dto.cancellationReason,
-        cancelledAt: new Date(),
-        cancelledBy: userId,
+        cancelReason: dto.cancellationReason,
+        cancelledBy,
       },
       include: {
         student: {
@@ -244,7 +263,11 @@ export class BookingsService {
             },
           },
         },
-        subject: true,
+        tutorSubject: {
+          include: {
+            subject: true,
+          },
+        },
       },
     });
 
@@ -272,8 +295,8 @@ export class BookingsService {
       throw new ForbiddenException('Only the tutor can confirm this booking');
     }
 
-    if (booking.status !== BookingStatus.pending) {
-      throw new BadRequestException('Can only confirm pending bookings');
+    if (booking.status !== BookingStatus.pending_payment) {
+      throw new BadRequestException('Can only confirm pending payment bookings');
     }
 
     const confirmed = await this.prisma.booking.update({
@@ -302,7 +325,11 @@ export class BookingsService {
             },
           },
         },
-        subject: true,
+        tutorSubject: {
+          include: {
+            subject: true,
+          },
+        },
       },
     });
 
@@ -334,7 +361,6 @@ export class BookingsService {
       where: { id: bookingId },
       data: {
         status: BookingStatus.completed,
-        completedSessions: booking.completedSessions + 1,
       },
       include: {
         student: {
@@ -357,15 +383,11 @@ export class BookingsService {
             },
           },
         },
-        subject: true,
-      },
-    });
-
-    // Update tutor stats
-    await this.prisma.tutorProfile.update({
-      where: { id: booking.tutorId },
-      data: {
-        completedLessonsCount: { increment: 1 },
+        tutorSubject: {
+          include: {
+            subject: true,
+          },
+        },
       },
     });
 
@@ -396,7 +418,11 @@ export class BookingsService {
             },
           },
         },
-        subject: true,
+        tutorSubject: {
+          include: {
+            subject: true,
+          },
+        },
         payment: true,
       },
     });
@@ -432,7 +458,7 @@ export class BookingsService {
     const [bookings, total] = await Promise.all([
       this.prisma.booking.findMany({
         where,
-        orderBy: { scheduledAt: 'desc' },
+        orderBy: { startAt: 'desc' },
         skip,
         take: limit,
         include: {
@@ -456,7 +482,11 @@ export class BookingsService {
               },
             },
           },
-          subject: true,
+          tutorSubject: {
+            include: {
+              subject: true,
+            },
+          },
         },
       }),
       this.prisma.booking.count({ where }),
@@ -475,34 +505,24 @@ export class BookingsService {
 
   private async checkConflictingBookings(
     tutorId: string,
-    scheduledAt: Date,
-    duration: number,
+    startAt: Date,
+    durationMinutes: number,
     excludeBookingId?: string,
   ): Promise<boolean> {
-    const endTime = new Date(scheduledAt.getTime() + duration * 60 * 60 * 1000);
+    const endAt = new Date(startAt.getTime() + durationMinutes * 60 * 1000);
 
     const conflicting = await this.prisma.booking.findFirst({
       where: {
         tutorId,
         id: excludeBookingId ? { not: excludeBookingId } : undefined,
         status: {
-          in: [BookingStatus.pending, BookingStatus.confirmed],
+          in: [BookingStatus.pending_payment, BookingStatus.confirmed],
         },
         OR: [
           {
             AND: [
-              { scheduledAt: { lte: scheduledAt } },
-              {
-                scheduledAt: {
-                  gte: new Date(scheduledAt.getTime() - duration * 60 * 60 * 1000),
-                },
-              },
-            ],
-          },
-          {
-            AND: [
-              { scheduledAt: { gte: scheduledAt } },
-              { scheduledAt: { lt: endTime } },
+              { startAt: { lt: endAt } },
+              { endAt: { gt: startAt } },
             ],
           },
         ],

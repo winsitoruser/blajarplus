@@ -7,23 +7,57 @@ export class ChatService {
   constructor(private prisma: PrismaService) {}
 
   async createConversation(userId: string, dto: CreateConversationDto) {
+    // Get user to determine if they are student or tutor
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    const otherUser = await this.prisma.user.findUnique({
+      where: { id: dto.participantId },
+    });
+
+    if (!user || !otherUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Determine studentId and tutorId
+    let studentId: string;
+    let tutorId: string;
+
+    if (user.role === 'student') {
+      studentId = userId;
+      const tutorProfile = await this.prisma.tutorProfile.findUnique({
+        where: { userId: dto.participantId },
+      });
+      if (!tutorProfile) {
+        throw new NotFoundException('Tutor profile not found');
+      }
+      tutorId = tutorProfile.id;
+    } else {
+      const tutorProfile = await this.prisma.tutorProfile.findUnique({
+        where: { userId },
+      });
+      if (!tutorProfile) {
+        throw new NotFoundException('Tutor profile not found');
+      }
+      tutorId = tutorProfile.id;
+      studentId = dto.participantId;
+    }
+
     // Check if conversation already exists
-    const existing = await this.prisma.conversation.findFirst({
+    const existing = await this.prisma.conversation.findUnique({
       where: {
-        OR: [
-          {
-            AND: [
-              { participant1Id: userId },
-              { participant2Id: dto.participantId },
-            ],
+        studentId_tutorId: {
+          studentId,
+          tutorId,
+        },
+      },
+      include: {
+        tutor: {
+          include: {
+            user: true,
           },
-          {
-            AND: [
-              { participant1Id: dto.participantId },
-              { participant2Id: userId },
-            ],
-          },
-        ],
+        },
       },
     });
 
@@ -34,22 +68,13 @@ export class ChatService {
     // Create new conversation
     const conversation = await this.prisma.conversation.create({
       data: {
-        participant1Id: userId,
-        participant2Id: dto.participantId,
+        studentId,
+        tutorId,
       },
       include: {
-        participant1: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
-          },
-        },
-        participant2: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
+        tutor: {
+          include: {
+            user: true,
           },
         },
       },
@@ -62,39 +87,34 @@ export class ChatService {
     // Verify conversation exists and user is participant
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: dto.conversationId },
+      include: {
+        tutor: {
+          include: {
+            user: true,
+          },
+        },
+      },
     });
 
     if (!conversation) {
       throw new NotFoundException('Conversation not found');
     }
 
-    if (conversation.participant1Id !== userId && conversation.participant2Id !== userId) {
+    // Check if user is participant (either student or tutor)
+    if (conversation.studentId !== userId && conversation.tutor.userId !== userId) {
       throw new ForbiddenException('You are not a participant in this conversation');
     }
-
-    // Determine receiver
-    const receiverId = conversation.participant1Id === userId
-      ? conversation.participant2Id
-      : conversation.participant1Id;
 
     // Create message
     const message = await this.prisma.message.create({
       data: {
         conversationId: dto.conversationId,
-        senderId: userId,
-        receiverId,
-        message: dto.message,
-        attachmentUrl: dto.attachmentUrl,
+        senderUserId: userId,
+        content: dto.message,
+        fileUrl: dto.attachmentUrl,
       },
       include: {
         sender: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
-          },
-        },
-        receiver: {
           select: {
             id: true,
             fullName: true,
@@ -116,37 +136,59 @@ export class ChatService {
   }
 
   async getConversations(userId: string) {
-    const conversations = await this.prisma.conversation.findMany({
-      where: {
-        OR: [
-          { participant1Id: userId },
-          { participant2Id: userId },
-        ],
-      },
-      include: {
-        participant1: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
-          },
-        },
-        participant2: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
-          },
-        },
-        messages: {
-          take: 1,
-          orderBy: { createdAt: 'desc' },
-        },
-      },
-      orderBy: {
-        lastMessageAt: 'desc',
-      },
+    // Get user to check role
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
     });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    let conversations;
+    if (user.role === 'student') {
+      conversations = await this.prisma.conversation.findMany({
+        where: { studentId: userId },
+        include: {
+          tutor: {
+            include: {
+              user: true,
+            },
+          },
+          messages: {
+            take: 1,
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+        orderBy: {
+          lastMessageAt: 'desc',
+        },
+      });
+    } else {
+      const tutorProfile = await this.prisma.tutorProfile.findUnique({
+        where: { userId },
+      });
+      if (!tutorProfile) {
+        throw new NotFoundException('Tutor profile not found');
+      }
+      conversations = await this.prisma.conversation.findMany({
+        where: { tutorId: tutorProfile.id },
+        include: {
+          tutor: {
+            include: {
+              user: true,
+            },
+          },
+          messages: {
+            take: 1,
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+        orderBy: {
+          lastMessageAt: 'desc',
+        },
+      });
+    }
 
     // Count unread messages for each conversation
     const conversationsWithUnread = await Promise.all(
@@ -154,17 +196,14 @@ export class ChatService {
         const unreadCount = await this.prisma.message.count({
           where: {
             conversationId: conv.id,
-            receiverId: userId,
-            isRead: false,
+            senderUserId: { not: userId },
+            readAt: null,
           },
         });
 
         return {
           ...conv,
           unreadCount,
-          otherParticipant: conv.participant1Id === userId
-            ? conv.participant2
-            : conv.participant1,
         };
       }),
     );
@@ -176,13 +215,20 @@ export class ChatService {
     // Verify user is participant
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
+      include: {
+        tutor: {
+          include: {
+            user: true,
+          },
+        },
+      },
     });
 
     if (!conversation) {
       throw new NotFoundException('Conversation not found');
     }
 
-    if (conversation.participant1Id !== userId && conversation.participant2Id !== userId) {
+    if (conversation.studentId !== userId && conversation.tutor.userId !== userId) {
       throw new ForbiddenException('You are not a participant in this conversation');
     }
 
@@ -222,25 +268,31 @@ export class ChatService {
     // Verify user is participant
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
+      include: {
+        tutor: {
+          include: {
+            user: true,
+          },
+        },
+      },
     });
 
     if (!conversation) {
       throw new NotFoundException('Conversation not found');
     }
 
-    if (conversation.participant1Id !== userId && conversation.participant2Id !== userId) {
+    if (conversation.studentId !== userId && conversation.tutor.userId !== userId) {
       throw new ForbiddenException('You are not a participant in this conversation');
     }
 
-    // Mark all messages as read
+    // Mark all messages as read (messages not sent by current user)
     await this.prisma.message.updateMany({
       where: {
         conversationId,
-        receiverId: userId,
-        isRead: false,
+        senderUserId: { not: userId },
+        readAt: null,
       },
       data: {
-        isRead: true,
         readAt: new Date(),
       },
     });
@@ -257,7 +309,7 @@ export class ChatService {
       throw new NotFoundException('Message not found');
     }
 
-    if (message.senderId !== userId) {
+    if (message.senderUserId !== userId) {
       throw new ForbiddenException('You can only delete your own messages');
     }
 
