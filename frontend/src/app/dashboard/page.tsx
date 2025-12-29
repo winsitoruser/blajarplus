@@ -7,7 +7,8 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, TrendingUp, Flame, Star, Trophy, Target, BookOpen, Clock, CreditCard, Calendar } from 'lucide-react';
+import { Award, TrendingUp, Flame, Star, Trophy, Target, BookOpen, Clock, CreditCard, Calendar, User, Camera, Phone, Mail, Lock, MapPin } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
 
 export default function DashboardPage() {
@@ -182,11 +183,29 @@ export default function DashboardPage() {
           {/* Header with Level & XP */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-3xl font-bold mb-2">Dashboard Belajar</h1>
-                <p className="text-gray-600">
-                  Selamat datang kembali, {user?.fullName}! 🎉
-                </p>
+              <div className="flex items-center gap-4">
+                {/* Profile Avatar */}
+                <div className="relative">
+                  <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      user?.fullName?.charAt(0) || 'U'
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => setActiveTab('profile')}
+                    className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-50 transition"
+                  >
+                    <Camera className="w-3 h-3 text-gray-600" />
+                  </button>
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold mb-1">Dashboard Belajar</h1>
+                  <p className="text-gray-600">
+                    Selamat datang kembali, {user?.fullName}! 🎉
+                  </p>
+                </div>
               </div>
               <div className="text-right">
                 <div className="flex items-center gap-2 mb-2">
@@ -257,6 +276,16 @@ export default function DashboardPage() {
                 }`}
               >
                 Pembayaran
+              </button>
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`pb-3 px-2 font-medium transition-colors ${
+                  activeTab === 'profile'
+                    ? 'text-primary-600 border-b-2 border-primary-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Profile
               </button>
             </div>
           </div>
@@ -694,6 +723,221 @@ export default function DashboardPage() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold mb-2">Manajemen Profile</h2>
+                <p className="text-gray-600">Kelola informasi pribadi dan keamanan akun Anda</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Profile Photo Section */}
+                <div className="lg:col-span-1">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Foto Profile</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex flex-col items-center">
+                        <div className="relative mb-4">
+                          <div className="w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-5xl font-bold shadow-lg">
+                            {user?.avatarUrl ? (
+                              <img src={user.avatarUrl} alt={user.fullName} className="w-full h-full rounded-full object-cover" />
+                            ) : (
+                              user?.fullName?.charAt(0) || 'U'
+                            )}
+                          </div>
+                          <button className="absolute bottom-0 right-0 w-10 h-10 bg-indigo-600 rounded-full shadow-lg flex items-center justify-center hover:bg-indigo-700 transition">
+                            <Camera className="w-5 h-5 text-white" />
+                          </button>
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900">{user?.fullName}</h3>
+                        <p className="text-sm text-gray-500">{user?.email}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                          <Camera className="w-4 h-4 mr-2" />
+                          Upload Foto Baru
+                        </Button>
+                        <Button variant="outline" className="w-full">
+                          Hapus Foto
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-500 text-center">
+                        Format: JPG, PNG. Maksimal 2MB
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Personal Information Section */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* Basic Info */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <User className="w-5 h-5 text-indigo-600" />
+                        Informasi Pribadi
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nama Lengkap
+                          </label>
+                          <Input
+                            type="text"
+                            defaultValue={user?.fullName}
+                            placeholder="Masukkan nama lengkap"
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Nomor Handphone
+                          </label>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Input
+                              type="tel"
+                              defaultValue={user?.phone || ''}
+                              placeholder="+62 812 3456 7890"
+                              className="w-full pl-10"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Email
+                        </label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            type="email"
+                            defaultValue={user?.email}
+                            placeholder="email@example.com"
+                            className="w-full pl-10"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Alamat
+                        </label>
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                          <textarea
+                            defaultValue={user?.address || ''}
+                            placeholder="Masukkan alamat lengkap"
+                            className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Kota
+                          </label>
+                          <Input
+                            type="text"
+                            defaultValue={user?.city || ''}
+                            placeholder="Kota"
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Provinsi
+                          </label>
+                          <Input
+                            type="text"
+                            defaultValue={user?.province || ''}
+                            placeholder="Provinsi"
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Bio
+                        </label>
+                        <textarea
+                          defaultValue={user?.bio || ''}
+                          placeholder="Ceritakan tentang diri Anda..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          rows={4}
+                        />
+                      </div>
+                      <div className="flex justify-end gap-3">
+                        <Button variant="outline">Batal</Button>
+                        <Button className="bg-indigo-600 hover:bg-indigo-700">
+                          Simpan Perubahan
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Security Section */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Lock className="w-5 h-5 text-indigo-600" />
+                        Keamanan Akun
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Password Saat Ini
+                        </label>
+                        <Input
+                          type="password"
+                          placeholder="Masukkan password saat ini"
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Password Baru
+                        </label>
+                        <Input
+                          type="password"
+                          placeholder="Masukkan password baru"
+                          className="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Konfirmasi Password Baru
+                        </label>
+                        <Input
+                          type="password"
+                          placeholder="Konfirmasi password baru"
+                          className="w-full"
+                        />
+                      </div>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-sm text-blue-800">
+                          <strong>Tips Keamanan:</strong> Gunakan kombinasi huruf besar, huruf kecil, angka, dan simbol. Minimal 8 karakter.
+                        </p>
+                      </div>
+                      <div className="flex justify-end gap-3">
+                        <Button variant="outline">Batal</Button>
+                        <Button className="bg-indigo-600 hover:bg-indigo-700">
+                          Update Password
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </div>
           )}
         </div>
