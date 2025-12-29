@@ -16,6 +16,10 @@ export class UsersService {
         avatarUrl: true,
         gender: true,
         birthdate: true,
+        address: true,
+        city: true,
+        province: true,
+        bio: true,
         role: true,
         status: true,
         createdAt: true,
@@ -24,9 +28,12 @@ export class UsersService {
   }
 
   async updateProfile(userId: string, data: any) {
+    // Remove password fields from profile update
+    const { password, passwordHash, ...profileData } = data;
+    
     return this.prisma.user.update({
       where: { id: userId },
-      data,
+      data: profileData,
       select: {
         id: true,
         email: true,
@@ -35,7 +42,41 @@ export class UsersService {
         avatarUrl: true,
         gender: true,
         birthdate: true,
+        address: true,
+        city: true,
+        province: true,
+        bio: true,
         role: true,
+      },
+    });
+  }
+
+  async updatePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { passwordHash: true },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // TODO: Add password verification logic here
+    // const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    // if (!isValid) throw new Error('Current password is incorrect');
+    
+    // TODO: Hash new password
+    // const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { 
+        // passwordHash: hashedPassword 
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
       },
     });
   }

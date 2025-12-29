@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Put, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
@@ -20,5 +20,11 @@ export class UsersController {
   @ApiOperation({ summary: 'Update current user profile' })
   updateProfile(@Req() req, @Body() data: any) {
     return this.usersService.updateProfile(req.user.id, data);
+  }
+
+  @Post('me/password')
+  @ApiOperation({ summary: 'Update user password' })
+  updatePassword(@Req() req, @Body() data: { currentPassword: string; newPassword: string }) {
+    return this.usersService.updatePassword(req.user.id, data.currentPassword, data.newPassword);
   }
 }

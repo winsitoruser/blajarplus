@@ -28,6 +28,10 @@ model User {
   avatarUrl     String?   @map("avatar_url")
   gender        String?
   birthdate     DateTime?
+  address       String?
+  city          String?
+  province      String?
+  bio           String?
   role          UserRole
   status        UserStatus @default(active)
   lastLoginAt   DateTime?  @map("last_login_at")

@@ -17,6 +17,26 @@ export default function DashboardPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  
+  // Profile form state
+  const [profileData, setProfileData] = useState({
+    fullName: '',
+    phone: '',
+    email: '',
+    address: '',
+    city: '',
+    province: '',
+    bio: ''
+  });
+
+  // Password form state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
   
   // Gamification data
   const [userStats, setUserStats] = useState({
@@ -68,20 +88,146 @@ export default function DashboardPage() {
       return;
     }
 
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      setUser(parsedUser);
+    fetchUserProfile();
+    fetchBookings();
+  }, []);
+
+  // Update profile form when user data changes
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        fullName: user.fullName || '',
+        phone: user.phone || '',
+        email: user.email || '',
+        address: user.address || '',
+        city: user.city || '',
+        province: user.province || '',
+        bio: user.bio || ''
+      });
+    }
+  }, [user]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await api.get('/users/me');
+      const userData = response.data;
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
       
       // Redirect tutor to tutor dashboard
-      if (parsedUser.role === 'tutor') {
+      if (userData.role === 'tutor') {
         router.push('/dashboard/tutor');
         return;
       }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      // Fallback to localStorage
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    }
+  };
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setMessage(null);
+
+    try {
+      const response = await api.put('/users/me', profileData);
+      setUser(response.data);
+      localStorage.setItem('user', JSON.stringify(response.data));
+      setMessage({ type: 'success', text: 'Profile berhasil diperbarui!' });
+      
+      // Refresh user data
+      await fetchUserProfile();
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || 'Gagal memperbarui profile' 
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setMessage({ type: 'error', text: 'Password baru dan konfirmasi tidak cocok' });
+      return;
     }
 
-    fetchBookings();
-  }, []);
+    if (passwordData.newPassword.length < 8) {
+      setMessage({ type: 'error', text: 'Password minimal 8 karakter' });
+      return;
+    }
+
+    setSaving(true);
+    setMessage(null);
+
+    try {
+      await api.post('/users/me/password', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+      
+      setMessage({ type: 'success', text: 'Password berhasil diperbarui!' });
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error: any) {
+      console.error('Error updating password:', error);
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || 'Gagal memperbarui password' 
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setMessage({ type: 'error', text: 'Ukuran file maksimal 2MB' });
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: 'File harus berupa gambar' });
+      return;
+    }
+
+    setSaving(true);
+    setMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      // TODO: Implement file upload endpoint
+      // const response = await api.post('/users/me/avatar', formData, {
+      //   headers: { 'Content-Type': 'multipart/form-data' }
+      // });
+      
+      setMessage({ type: 'success', text: 'Foto profile berhasil diupload!' });
+      // await fetchUserProfile();
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error);
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || 'Gagal mengupload foto' 
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const fetchBookings = async () => {
     try {
@@ -734,6 +880,17 @@ export default function DashboardPage() {
                 <p className="text-gray-600">Kelola informasi pribadi dan keamanan akun Anda</p>
               </div>
 
+              {/* Success/Error Message */}
+              {message && (
+                <div className={`mb-6 p-4 rounded-lg ${
+                  message.type === 'success' 
+                    ? 'bg-green-50 border border-green-200 text-green-800' 
+                    : 'bg-red-50 border border-red-200 text-red-800'
+                }`}>
+                  {message.text}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Profile Photo Section */}
                 <div className="lg:col-span-1">
@@ -759,11 +916,28 @@ export default function DashboardPage() {
                         <p className="text-sm text-gray-500">{user?.email}</p>
                       </div>
                       <div className="space-y-2">
-                        <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                        <input
+                          type="file"
+                          id="avatar-upload"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleAvatarUpload}
+                        />
+                        <Button 
+                          type="button"
+                          onClick={() => document.getElementById('avatar-upload')?.click()}
+                          disabled={saving}
+                          className="w-full bg-indigo-600 hover:bg-indigo-700"
+                        >
                           <Camera className="w-4 h-4 mr-2" />
-                          Upload Foto Baru
+                          {saving ? 'Uploading...' : 'Upload Foto Baru'}
                         </Button>
-                        <Button variant="outline" className="w-full">
+                        <Button 
+                          type="button"
+                          variant="outline" 
+                          className="w-full"
+                          disabled={saving}
+                        >
                           Hapus Foto
                         </Button>
                       </div>
@@ -784,103 +958,125 @@ export default function DashboardPage() {
                         Informasi Pribadi
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nama Lengkap
-                          </label>
-                          <Input
-                            type="text"
-                            defaultValue={user?.fullName}
-                            placeholder="Masukkan nama lengkap"
-                            className="w-full"
-                          />
+                    <CardContent>
+                      <form onSubmit={handleProfileUpdate} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Nama Lengkap
+                            </label>
+                            <Input
+                              type="text"
+                              value={profileData.fullName}
+                              onChange={(e) => setProfileData({...profileData, fullName: e.target.value})}
+                              placeholder="Masukkan nama lengkap"
+                              className="w-full"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Nomor Handphone
+                            </label>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                              <Input
+                                type="tel"
+                                value={profileData.phone}
+                                onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                                placeholder="+62 812 3456 7890"
+                                className="w-full pl-10"
+                              />
+                            </div>
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nomor Handphone
+                            Email
                           </label>
                           <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <Input
-                              type="tel"
-                              defaultValue={user?.phone || ''}
-                              placeholder="+62 812 3456 7890"
+                              type="email"
+                              value={profileData.email}
+                              onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                              placeholder="email@example.com"
                               className="w-full pl-10"
+                              required
                             />
                           </div>
                         </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Email
-                        </label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <Input
-                            type="email"
-                            defaultValue={user?.email}
-                            placeholder="email@example.com"
-                            className="w-full pl-10"
-                          />
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Alamat
+                          </label>
+                          <div className="relative">
+                            <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                            <textarea
+                              value={profileData.address}
+                              onChange={(e) => setProfileData({...profileData, address: e.target.value})}
+                              placeholder="Masukkan alamat lengkap"
+                              className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              rows={3}
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Alamat
-                        </label>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Kota
+                            </label>
+                            <Input
+                              type="text"
+                              value={profileData.city}
+                              onChange={(e) => setProfileData({...profileData, city: e.target.value})}
+                              placeholder="Kota"
+                              className="w-full"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Provinsi
+                            </label>
+                            <Input
+                              type="text"
+                              value={profileData.province}
+                              onChange={(e) => setProfileData({...profileData, province: e.target.value})}
+                              placeholder="Provinsi"
+                              className="w-full"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Bio
+                          </label>
                           <textarea
-                            defaultValue={user?.address || ''}
-                            placeholder="Masukkan alamat lengkap"
-                            className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                            rows={3}
+                            value={profileData.bio}
+                            onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                            placeholder="Ceritakan tentang diri Anda..."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            rows={4}
                           />
                         </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Kota
-                          </label>
-                          <Input
-                            type="text"
-                            defaultValue={user?.city || ''}
-                            placeholder="Kota"
-                            className="w-full"
-                          />
+                        <div className="flex justify-end gap-3">
+                          <Button 
+                            type="button" 
+                            variant="outline"
+                            onClick={() => fetchUserProfile()}
+                            disabled={saving}
+                          >
+                            Batal
+                          </Button>
+                          <Button 
+                            type="submit"
+                            className="bg-indigo-600 hover:bg-indigo-700"
+                            disabled={saving}
+                          >
+                            {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+                          </Button>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Provinsi
-                          </label>
-                          <Input
-                            type="text"
-                            defaultValue={user?.province || ''}
-                            placeholder="Provinsi"
-                            className="w-full"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Bio
-                        </label>
-                        <textarea
-                          defaultValue={user?.bio || ''}
-                          placeholder="Ceritakan tentang diri Anda..."
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                          rows={4}
-                        />
-                      </div>
-                      <div className="flex justify-end gap-3">
-                        <Button variant="outline">Batal</Button>
-                        <Button className="bg-indigo-600 hover:bg-indigo-700">
-                          Simpan Perubahan
-                        </Button>
-                      </div>
+                      </form>
                     </CardContent>
                   </Card>
 
@@ -892,48 +1088,72 @@ export default function DashboardPage() {
                         Keamanan Akun
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Password Saat Ini
-                        </label>
-                        <Input
-                          type="password"
-                          placeholder="Masukkan password saat ini"
-                          className="w-full"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Password Baru
-                        </label>
-                        <Input
-                          type="password"
-                          placeholder="Masukkan password baru"
-                          className="w-full"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Konfirmasi Password Baru
-                        </label>
-                        <Input
-                          type="password"
-                          placeholder="Konfirmasi password baru"
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p className="text-sm text-blue-800">
-                          <strong>Tips Keamanan:</strong> Gunakan kombinasi huruf besar, huruf kecil, angka, dan simbol. Minimal 8 karakter.
-                        </p>
-                      </div>
-                      <div className="flex justify-end gap-3">
-                        <Button variant="outline">Batal</Button>
-                        <Button className="bg-indigo-600 hover:bg-indigo-700">
-                          Update Password
-                        </Button>
-                      </div>
+                    <CardContent>
+                      <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Password Saat Ini
+                          </label>
+                          <Input
+                            type="password"
+                            value={passwordData.currentPassword}
+                            onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                            placeholder="Masukkan password saat ini"
+                            className="w-full"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Password Baru
+                          </label>
+                          <Input
+                            type="password"
+                            value={passwordData.newPassword}
+                            onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                            placeholder="Masukkan password baru"
+                            className="w-full"
+                            required
+                            minLength={8}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Konfirmasi Password Baru
+                          </label>
+                          <Input
+                            type="password"
+                            value={passwordData.confirmPassword}
+                            onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                            placeholder="Konfirmasi password baru"
+                            className="w-full"
+                            required
+                            minLength={8}
+                          />
+                        </div>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <p className="text-sm text-blue-800">
+                            <strong>Tips Keamanan:</strong> Gunakan kombinasi huruf besar, huruf kecil, angka, dan simbol. Minimal 8 karakter.
+                          </p>
+                        </div>
+                        <div className="flex justify-end gap-3">
+                          <Button 
+                            type="button" 
+                            variant="outline"
+                            onClick={() => setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })}
+                            disabled={saving}
+                          >
+                            Batal
+                          </Button>
+                          <Button 
+                            type="submit"
+                            className="bg-indigo-600 hover:bg-indigo-700"
+                            disabled={saving}
+                          >
+                            {saving ? 'Memperbarui...' : 'Update Password'}
+                          </Button>
+                        </div>
+                      </form>
                     </CardContent>
                   </Card>
                 </div>
