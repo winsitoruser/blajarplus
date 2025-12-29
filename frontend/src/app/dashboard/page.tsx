@@ -264,222 +264,140 @@ export default function DashboardPage() {
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <>
-              {/* Gamification Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <Flame className="w-8 h-8" />
-                      <div className="text-right">
-                        <div className="text-3xl font-bold">{userStats.streak}</div>
-                        <div className="text-sm opacity-90">Day Streak</div>
-                      </div>
-                    </div>
-                    <div className="text-xs opacity-75 mt-2">Longest: {userStats.longestStreak} days 🔥</div>
-                  </CardContent>
-                </Card>
+              {/* Gamification Stats - Simplified */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-xl p-6 shadow-lg hover:shadow-xl transition">
+                  <Flame className="w-10 h-10 mb-3" />
+                  <div className="text-4xl font-bold mb-1">{userStats.streak}</div>
+                  <div className="text-sm opacity-90">Day Streak 🔥</div>
+                </div>
 
-                <Card className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <BookOpen className="w-8 h-8" />
-                      <div className="text-right">
-                        <div className="text-3xl font-bold">{userStats.totalLessons}</div>
-                        <div className="text-sm opacity-90">Total Lessons</div>
-                      </div>
-                    </div>
-                    <div className="text-xs opacity-75 mt-2">Keep learning! 📚</div>
-                  </CardContent>
-                </Card>
+                <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-xl p-6 shadow-lg hover:shadow-xl transition">
+                  <BookOpen className="w-10 h-10 mb-3" />
+                  <div className="text-4xl font-bold mb-1">{userStats.totalLessons}</div>
+                  <div className="text-sm opacity-90">Lessons 📚</div>
+                </div>
 
-                <Card className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <Clock className="w-8 h-8" />
-                      <div className="text-right">
-                        <div className="text-3xl font-bold">{userStats.hoursLearned}</div>
-                        <div className="text-sm opacity-90">Hours Learned</div>
-                      </div>
-                    </div>
-                    <div className="text-xs opacity-75 mt-2">Time well spent! ⏰</div>
-                  </CardContent>
-                </Card>
+                <div className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white rounded-xl p-6 shadow-lg hover:shadow-xl transition">
+                  <Clock className="w-10 h-10 mb-3" />
+                  <div className="text-4xl font-bold mb-1">{userStats.hoursLearned}</div>
+                  <div className="text-sm opacity-90">Hours ⏰</div>
+                </div>
 
-                <Card className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <Award className="w-8 h-8" />
-                      <div className="text-right">
-                        <div className="text-3xl font-bold">{userStats.achievements}</div>
-                        <div className="text-sm opacity-90">Achievements</div>
-                      </div>
-                    </div>
-                    <div className="text-xs opacity-75 mt-2">Rank: {userStats.rank} 🏆</div>
-                  </CardContent>
-                </Card>
+                <div className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white rounded-xl p-6 shadow-lg hover:shadow-xl transition">
+                  <Award className="w-10 h-10 mb-3" />
+                  <div className="text-4xl font-bold mb-1">{userStats.achievements}</div>
+                  <div className="text-sm opacity-90">Badges 🏆</div>
+                </div>
               </div>
 
-              {/* Booking Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-sm text-gray-600 mb-1">Total Booking</div>
-                <div className="text-3xl font-bold">{bookings.length}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-sm text-gray-600 mb-1">Menunggu</div>
-                <div className="text-3xl font-bold text-yellow-600">
-                  {bookings.filter(b => b.status === 'pending').length}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-sm text-gray-600 mb-1">Dikonfirmasi</div>
-                <div className="text-3xl font-bold text-green-600">
-                  {bookings.filter(b => b.status === 'confirmed').length}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-sm text-gray-600 mb-1">Selesai</div>
-                <div className="text-3xl font-bold text-blue-600">
-                  {bookings.filter(b => b.status === 'completed').length}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-              {/* Recent Achievements */}
+              {/* Recent Achievements - Simplified */}
               <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Trophy className="w-6 h-6 text-yellow-500" />
+                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                  <Trophy className="w-7 h-7 text-yellow-500" />
                   Achievement Terbaru
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {achievements.filter(a => a.unlocked).slice(0, 4).map(achievement => (
-                    <Card key={achievement.id} className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200">
-                      <CardContent className="p-4 text-center">
-                        <div className="text-4xl mb-2">{achievement.icon}</div>
-                        <div className="font-semibold text-sm mb-1">{achievement.name}</div>
-                        <div className="text-xs text-gray-600">{achievement.description}</div>
-                        <div className="text-xs text-gray-500 mt-2">{new Date(achievement.date!).toLocaleDateString('id-ID')}</div>
-                      </CardContent>
-                    </Card>
+                    <div key={achievement.id} className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-4 text-center hover:scale-105 transition">
+                      <div className="text-5xl mb-3">{achievement.icon}</div>
+                      <div className="font-bold text-sm mb-1">{achievement.name}</div>
+                      <div className="text-xs text-gray-500">{new Date(achievement.date!).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })}</div>
+                    </div>
                   ))}
                 </div>
               </div>
 
-              {/* Quick Actions */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Aksi Cepat</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link href="/search">
-                <Card className="hover:shadow-md transition cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <div className="text-4xl mb-2">🔍</div>
-                    <div className="font-medium">Cari Tutor</div>
-                  </CardContent>
-                </Card>
-              </Link>
-              <Link href="/bookings">
-                <Card className="hover:shadow-md transition cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <div className="text-4xl mb-2">📅</div>
-                    <div className="font-medium">Lihat Booking</div>
-                  </CardContent>
-                </Card>
-              </Link>
-              <Link href="/chat">
-                <Card className="hover:shadow-md transition cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <div className="text-4xl mb-2">💬</div>
-                    <div className="font-medium">Pesan</div>
-                  </CardContent>
-                </Card>
-              </Link>
-            </div>
-          </div>
-
-              {/* Recent Bookings */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Booking Terbaru</h2>
-              <Link href="/bookings">
-                <Button variant="outline" size="sm">Lihat Semua</Button>
-              </Link>
-            </div>
-
-            {bookings.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <div className="text-6xl mb-4">📚</div>
-                  <h3 className="text-xl font-semibold mb-2">Belum ada booking</h3>
-                  <p className="text-gray-600 mb-4">
-                    Mulai cari tutor dan buat booking pertama Anda
-                  </p>
+              {/* Quick Actions - Simplified */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold mb-4">Aksi Cepat</h2>
+                <div className="grid grid-cols-3 gap-4">
                   <Link href="/search">
-                    <Button>Cari Tutor</Button>
+                    <div className="bg-white rounded-xl p-6 text-center hover:shadow-lg transition cursor-pointer border-2 border-gray-100 hover:border-primary-300">
+                      <div className="text-5xl mb-3">🔍</div>
+                      <div className="font-semibold">Cari Tutor</div>
+                    </div>
                   </Link>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {bookings.slice(0, 5).map((booking: any) => (
-                  <Card key={booking.id}>
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                            {user?.role === 'student' ? (
-                              <span className="text-xl">
-                                {booking.tutor.user.fullName.charAt(0)}
-                              </span>
-                            ) : (
-                              <span className="text-xl">
-                                {booking.student.fullName.charAt(0)}
-                              </span>
-                            )}
-                          </div>
-                          <div>
-                            <div className="font-medium">
+                  <Link href="/bookings">
+                    <div className="bg-white rounded-xl p-6 text-center hover:shadow-lg transition cursor-pointer border-2 border-gray-100 hover:border-primary-300">
+                      <div className="text-5xl mb-3">📅</div>
+                      <div className="font-semibold">Booking</div>
+                    </div>
+                  </Link>
+                  <Link href="/chat">
+                    <div className="bg-white rounded-xl p-6 text-center hover:shadow-lg transition cursor-pointer border-2 border-gray-100 hover:border-primary-300">
+                      <div className="text-5xl mb-3">💬</div>
+                      <div className="font-semibold">Pesan</div>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Recent Bookings - Simplified */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold">Booking Terbaru</h2>
+                  <Link href="/bookings">
+                    <Button variant="outline" size="sm">Lihat Semua</Button>
+                  </Link>
+                </div>
+
+                {bookings.length === 0 ? (
+                  <div className="bg-white rounded-xl p-12 text-center border-2 border-dashed border-gray-300">
+                    <div className="text-6xl mb-4">📚</div>
+                    <h3 className="text-xl font-bold mb-2">Belum ada booking</h3>
+                    <p className="text-gray-600 mb-4">
+                      Mulai cari tutor dan buat booking pertama Anda
+                    </p>
+                    <Link href="/search">
+                      <Button>Cari Tutor</Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {bookings.slice(0, 3).map((booking: any) => (
+                      <div key={booking.id} className="bg-white rounded-xl p-5 border-2 border-gray-100 hover:border-primary-200 hover:shadow-md transition">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
                               {user?.role === 'student' 
-                                ? booking.tutor.user.fullName 
-                                : booking.student.fullName}
+                                ? booking.tutor.user.fullName.charAt(0)
+                                : booking.student.fullName.charAt(0)}
                             </div>
-                            <div className="text-sm text-gray-600">
-                              {booking.subject.name} • {booking.duration} jam
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {new Date(booking.scheduledAt).toLocaleDateString('id-ID', {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                            <div>
+                              <div className="font-bold text-lg">
+                                {user?.role === 'student' 
+                                  ? booking.tutor.user.fullName 
+                                  : booking.student.fullName}
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {booking.subject.name} • {booking.duration} jam
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {new Date(booking.scheduledAt).toLocaleDateString('id-ID', {
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(booking.status)}`}>
-                            {getStatusText(booking.status)}
-                          </span>
-                          <div className="mt-2 font-semibold text-primary-500">
-                            Rp {booking.totalAmount.toLocaleString('id-ID')}
+                          <div className="text-right">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(booking.status)}`}>
+                              {getStatusText(booking.status)}
+                            </span>
+                            <div className="mt-2 font-bold text-lg text-gray-800">
+                              Rp {booking.totalAmount.toLocaleString('id-ID')}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
             </>
           )}
 
