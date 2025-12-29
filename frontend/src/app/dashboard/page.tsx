@@ -7,7 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, TrendingUp, Flame, Star, Trophy, Target, BookOpen, Clock, CreditCard, Calendar, User, Camera, Phone, Mail, Lock, MapPin } from 'lucide-react';
+import { Award, TrendingUp, Flame, Star, Trophy, Target, BookOpen, Clock, CreditCard, Calendar, User, Camera, Phone, Mail, Lock, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import api from '@/lib/api';
 
@@ -37,6 +37,49 @@ export default function DashboardPage() {
     newPassword: '',
     confirmPassword: ''
   });
+
+  // Carousel state
+  const [currentBanner, setCurrentBanner] = useState(0);
+  
+  // Banner data
+  const banners = [
+    {
+      id: 1,
+      title: 'Tingkatkan Skill Belajarmu!',
+      subtitle: 'Belajar dengan tutor profesional dan berpengalaman',
+      bgGradient: 'from-blue-500 to-indigo-600',
+      icon: '📚',
+      cta: 'Cari Tutor',
+      link: '/search'
+    },
+    {
+      id: 2,
+      title: 'Raih Achievement Baru!',
+      subtitle: 'Kumpulkan XP dan unlock badge eksklusif',
+      bgGradient: 'from-purple-500 to-pink-600',
+      icon: '🏆',
+      cta: 'Lihat Achievement',
+      link: '#achievements'
+    },
+    {
+      id: 3,
+      title: 'Promo Spesial Hari Ini!',
+      subtitle: 'Diskon 20% untuk semua paket belajar',
+      bgGradient: 'from-orange-500 to-red-600',
+      icon: '🎉',
+      cta: 'Lihat Promo',
+      link: '/search'
+    },
+    {
+      id: 4,
+      title: 'Streak 7 Hari Berturut!',
+      subtitle: 'Pertahankan konsistensi belajarmu',
+      bgGradient: 'from-green-500 to-teal-600',
+      icon: '🔥',
+      cta: 'Lanjutkan Belajar',
+      link: '/search'
+    }
+  ];
   
   // Gamification data
   const [userStats, setUserStats] = useState({
@@ -91,6 +134,27 @@ export default function DashboardPage() {
     fetchUserProfile();
     fetchBookings();
   }, []);
+
+  // Auto-play carousel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % banners.length);
+    }, 5000); // Change banner every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [banners.length]);
+
+  const nextBanner = () => {
+    setCurrentBanner((prev) => (prev + 1) % banners.length);
+  };
+
+  const prevBanner = () => {
+    setCurrentBanner((prev) => (prev - 1 + banners.length) % banners.length);
+  };
+
+  const goToBanner = (index: number) => {
+    setCurrentBanner(index);
+  };
 
   // Update profile form when user data changes
   useEffect(() => {
@@ -326,6 +390,76 @@ export default function DashboardPage() {
 
       <div className="flex-1 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
         <div className="max-w-7xl mx-auto px-4 py-8">
+          {/* Banner Carousel */}
+          <div className="mb-8 relative overflow-hidden rounded-2xl shadow-2xl">
+            <div className="relative h-64 md:h-80">
+              {/* Banner Slides */}
+              {banners.map((banner, index) => (
+                <div
+                  key={banner.id}
+                  className={`absolute inset-0 transition-all duration-700 ease-in-out ${
+                    index === currentBanner 
+                      ? 'opacity-100 translate-x-0' 
+                      : index < currentBanner 
+                        ? 'opacity-0 -translate-x-full' 
+                        : 'opacity-0 translate-x-full'
+                  }`}
+                >
+                  <div className={`w-full h-full bg-gradient-to-r ${banner.bgGradient} flex items-center justify-between px-8 md:px-16`}>
+                    <div className="text-white max-w-2xl">
+                      <div className="text-6xl mb-4">{banner.icon}</div>
+                      <h2 className="text-3xl md:text-5xl font-bold mb-4">{banner.title}</h2>
+                      <p className="text-lg md:text-xl mb-6 text-white/90">{banner.subtitle}</p>
+                      <Link href={banner.link}>
+                        <Button 
+                          size="lg" 
+                          className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-6 text-lg shadow-lg"
+                        >
+                          {banner.cta}
+                        </Button>
+                      </Link>
+                    </div>
+                    <div className="hidden md:block text-white/20 text-9xl font-bold">
+                      {banner.icon}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Navigation Arrows */}
+              <button
+                onClick={prevBanner}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all group"
+                aria-label="Previous banner"
+              >
+                <ChevronLeft className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
+              </button>
+              <button
+                onClick={nextBanner}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all group"
+                aria-label="Next banner"
+              >
+                <ChevronRight className="w-6 h-6 text-white group-hover:scale-110 transition-transform" />
+              </button>
+
+              {/* Dots Indicator */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                {banners.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToBanner(index)}
+                    className={`transition-all ${
+                      index === currentBanner
+                        ? 'w-8 h-3 bg-white'
+                        : 'w-3 h-3 bg-white/50 hover:bg-white/75'
+                    } rounded-full`}
+                    aria-label={`Go to banner ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Header with Level & XP */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
