@@ -167,20 +167,11 @@ model Subject {
   @@map("subjects")
 }
 
-enum Level {
-  sd
-  smp
-  sma
-  university
-  professional
-  general
-}
-
 model TutorSubject {
   id            String   @id @default(uuid())
   tutorId       String   @map("tutor_profile_id")
   subjectId     String   @map("subject_id")
-  level         Level
+  level         String
   priceOverride Decimal? @map("price_override") 
   currency      String   @default("IDR")
   description   String?

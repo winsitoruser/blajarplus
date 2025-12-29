@@ -374,18 +374,29 @@ export default function TutorDashboardPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Tingkat</label>
-                  <select
+                  <Input
+                    list="level-options"
                     value={formData.level}
                     onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg"
+                    placeholder="Pilih atau ketik tingkat (SD, SMP, Pemula, Basic, dll)"
                     required
-                  >
-                    <option value="">Pilih Tingkat</option>
-                    <option value="SD">SD</option>
-                    <option value="SMP">SMP</option>
-                    <option value="SMA">SMA</option>
-                    <option value="Universitas">Universitas</option>
-                  </select>
+                  />
+                  <datalist id="level-options">
+                    <option value="SD" />
+                    <option value="SMP" />
+                    <option value="SMA" />
+                    <option value="Universitas" />
+                    <option value="Pemula" />
+                    <option value="Dasar" />
+                    <option value="Menengah" />
+                    <option value="Lanjutan" />
+                    <option value="Basic" />
+                    <option value="Intermediate" />
+                    <option value="Advanced" />
+                    <option value="Premium" />
+                    <option value="Professional" />
+                  </datalist>
+                  <p className="text-xs text-gray-500 mt-1">Pilih dari dropdown atau ketik tingkat custom Anda sendiri</p>
                 </div>
               </div>
 
