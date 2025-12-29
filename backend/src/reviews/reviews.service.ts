@@ -40,14 +40,14 @@ export class ReviewsService {
     // Create review
     const review = await this.prisma.review.create({
       data: {
-        bookingId: dto.bookingId,
-        studentId,
-        tutorId: booking.tutorId,
+        booking: { connect: { id: dto.bookingId } },
+        author: { connect: { id: studentId } },
+        tutor: { connect: { id: booking.tutorId } },
         rating: dto.rating,
         comment: dto.comment,
       },
       include: {
-        student: {
+        author: {
           select: {
             id: true,
             fullName: true,
@@ -65,11 +65,7 @@ export class ReviewsService {
             },
           },
         },
-        booking: {
-          include: {
-            subject: true,
-          },
-        },
+        booking: true,
       },
     });
 
@@ -91,7 +87,7 @@ export class ReviewsService {
       throw new NotFoundException('Review not found');
     }
 
-    if (review.studentId !== studentId) {
+    if (review.authorUserId !== studentId) {
       throw new ForbiddenException('You can only update your own reviews');
     }
 
@@ -102,7 +98,7 @@ export class ReviewsService {
         comment: dto.comment,
       },
       include: {
-        student: {
+        author: {
           select: {
             id: true,
             fullName: true,
@@ -120,11 +116,7 @@ export class ReviewsService {
             },
           },
         },
-        booking: {
-          include: {
-            subject: true,
-          },
-        },
+        booking: true,
       },
     });
 
@@ -143,7 +135,7 @@ export class ReviewsService {
       throw new NotFoundException('Review not found');
     }
 
-    if (review.studentId !== studentId) {
+    if (review.authorUserId !== studentId) {
       throw new ForbiddenException('You can only delete your own reviews');
     }
 
@@ -161,7 +153,7 @@ export class ReviewsService {
     const review = await this.prisma.review.findUnique({
       where: { id: reviewId },
       include: {
-        student: {
+        author: {
           select: {
             id: true,
             fullName: true,
@@ -179,11 +171,7 @@ export class ReviewsService {
             },
           },
         },
-        booking: {
-          include: {
-            subject: true,
-          },
-        },
+        booking: true,
       },
     });
 
@@ -215,18 +203,14 @@ export class ReviewsService {
         skip,
         take: limit,
         include: {
-          student: {
+          author: {
             select: {
               id: true,
               fullName: true,
               avatarUrl: true,
             },
           },
-          booking: {
-            include: {
-              subject: true,
-            },
-          },
+          booking: true,
         },
       }),
       this.prisma.review.count({ where: { tutorId } }),
@@ -260,7 +244,7 @@ export class ReviewsService {
         page,
         limit,
         totalPages: Math.ceil(total / limit),
-        averageRating: tutor.averageRating,
+        averageRating: tutor.ratingAvg,
         ratingDistribution: distribution,
       },
     };
@@ -273,7 +257,7 @@ export class ReviewsService {
 
     const [reviews, total] = await Promise.all([
       this.prisma.review.findMany({
-        where: { studentId },
+        where: { authorUserId: studentId },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -289,14 +273,10 @@ export class ReviewsService {
               },
             },
           },
-          booking: {
-            include: {
-              subject: true,
-            },
-          },
+          booking: true,
         },
       }),
-      this.prisma.review.count({ where: { studentId } }),
+      this.prisma.review.count({ where: { authorUserId: studentId } }),
     ]);
 
     return {
@@ -324,8 +304,8 @@ export class ReviewsService {
     await this.prisma.tutorProfile.update({
       where: { id: tutorId },
       data: {
-        averageRating: result._avg.rating || 0,
-        totalReviews: result._count.rating,
+        ratingAvg: result._avg.rating || 0,
+        ratingCount: result._count.rating,
       },
     });
   }

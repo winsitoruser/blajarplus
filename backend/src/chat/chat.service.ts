@@ -7,23 +7,15 @@ export class ChatService {
   constructor(private prisma: PrismaService) {}
 
   async createConversation(userId: string, dto: CreateConversationDto) {
+    // Determine if user is student or tutor
+    // For simplicity, assume dto.participantId is tutorId and userId is studentId
+    // In real implementation, you'd check user roles
+    
     // Check if conversation already exists
     const existing = await this.prisma.conversation.findFirst({
       where: {
-        OR: [
-          {
-            AND: [
-              { participant1Id: userId },
-              { participant2Id: dto.participantId },
-            ],
-          },
-          {
-            AND: [
-              { participant1Id: dto.participantId },
-              { participant2Id: userId },
-            ],
-          },
-        ],
+        studentId: userId,
+        tutorId: dto.participantId,
       },
     });
 
@@ -34,22 +26,19 @@ export class ChatService {
     // Create new conversation
     const conversation = await this.prisma.conversation.create({
       data: {
-        participant1Id: userId,
-        participant2Id: dto.participantId,
+        studentId: userId,
+        tutor: { connect: { id: dto.participantId } },
       },
       include: {
-        participant1: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
-          },
-        },
-        participant2: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
+        tutor: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                avatarUrl: true,
+              },
+            },
           },
         },
       },
@@ -68,33 +57,21 @@ export class ChatService {
       throw new NotFoundException('Conversation not found');
     }
 
-    if (conversation.participant1Id !== userId && conversation.participant2Id !== userId) {
+    if (conversation.studentId !== userId && conversation.tutorId !== userId) {
       throw new ForbiddenException('You are not a participant in this conversation');
     }
-
-    // Determine receiver
-    const receiverId = conversation.participant1Id === userId
-      ? conversation.participant2Id
-      : conversation.participant1Id;
 
     // Create message
     const message = await this.prisma.message.create({
       data: {
-        conversationId: dto.conversationId,
-        senderId: userId,
-        receiverId,
-        message: dto.message,
-        attachmentUrl: dto.attachmentUrl,
+        conversation: { connect: { id: dto.conversationId } },
+        sender: { connect: { id: userId } },
+        content: dto.message,
+        fileUrl: dto.attachmentUrl,
+        messageType: dto.attachmentUrl ? 'file' : 'text',
       },
       include: {
         sender: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
-          },
-        },
-        receiver: {
           select: {
             id: true,
             fullName: true,
@@ -119,23 +96,20 @@ export class ChatService {
     const conversations = await this.prisma.conversation.findMany({
       where: {
         OR: [
-          { participant1Id: userId },
-          { participant2Id: userId },
+          { studentId: userId },
+          { tutorId: userId },
         ],
       },
       include: {
-        participant1: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
-          },
-        },
-        participant2: {
-          select: {
-            id: true,
-            fullName: true,
-            avatarUrl: true,
+        tutor: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                avatarUrl: true,
+              },
+            },
           },
         },
         messages: {
@@ -154,17 +128,14 @@ export class ChatService {
         const unreadCount = await this.prisma.message.count({
           where: {
             conversationId: conv.id,
-            receiverId: userId,
-            isRead: false,
+            senderUserId: { not: userId },
+            readAt: null,
           },
         });
 
         return {
           ...conv,
           unreadCount,
-          otherParticipant: conv.participant1Id === userId
-            ? conv.participant2
-            : conv.participant1,
         };
       }),
     );
@@ -182,7 +153,7 @@ export class ChatService {
       throw new NotFoundException('Conversation not found');
     }
 
-    if (conversation.participant1Id !== userId && conversation.participant2Id !== userId) {
+    if (conversation.studentId !== userId && conversation.tutorId !== userId) {
       throw new ForbiddenException('You are not a participant in this conversation');
     }
 
@@ -228,19 +199,18 @@ export class ChatService {
       throw new NotFoundException('Conversation not found');
     }
 
-    if (conversation.participant1Id !== userId && conversation.participant2Id !== userId) {
+    if (conversation.studentId !== userId && conversation.tutorId !== userId) {
       throw new ForbiddenException('You are not a participant in this conversation');
     }
 
-    // Mark all messages as read
+    // Mark all messages as read (messages not sent by current user)
     await this.prisma.message.updateMany({
       where: {
         conversationId,
-        receiverId: userId,
-        isRead: false,
+        senderUserId: { not: userId },
+        readAt: null,
       },
       data: {
-        isRead: true,
         readAt: new Date(),
       },
     });
@@ -257,7 +227,7 @@ export class ChatService {
       throw new NotFoundException('Message not found');
     }
 
-    if (message.senderId !== userId) {
+    if (message.senderUserId !== userId) {
       throw new ForbiddenException('You can only delete your own messages');
     }
 

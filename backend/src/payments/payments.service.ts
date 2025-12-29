@@ -34,7 +34,6 @@ export class PaymentsService {
             user: true,
           },
         },
-        subject: true,
       },
     });
 
@@ -46,8 +45,8 @@ export class PaymentsService {
       throw new ForbiddenException('You can only pay for your own bookings');
     }
 
-    // Check if booking is pending
-    if (booking.status !== 'pending') {
+    // Check if booking is pending payment
+    if (booking.status !== 'pending_payment') {
       throw new BadRequestException('Can only pay for pending bookings');
     }
 
@@ -69,11 +68,12 @@ export class PaymentsService {
     // Create payment record
     const payment = await this.prisma.paymentTransaction.create({
       data: {
-        bookingId: dto.bookingId,
+        booking: { connect: { id: dto.bookingId } },
         amount: booking.totalAmount,
         paymentMethod: dto.paymentMethod,
+        provider: 'midtrans',
+        externalPaymentId: orderId,
         status: 'pending',
-        orderId,
       },
       include: {
         booking: {
@@ -84,7 +84,6 @@ export class PaymentsService {
                 user: true,
               },
             },
-            subject: true,
           },
         },
       },
@@ -103,10 +102,10 @@ export class PaymentsService {
       },
       item_details: [
         {
-          id: booking.subject.id,
+          id: booking.id,
           price: booking.totalAmount,
           quantity: 1,
-          name: `Les ${booking.subject.name} dengan ${booking.tutor.user.fullName}`,
+          name: `Les dengan ${booking.tutor.user.fullName}`,
         },
       ],
       callbacks: {
@@ -118,12 +117,7 @@ export class PaymentsService {
       // Call Midtrans Snap API
       const snapToken = await this.createMidtransTransaction(midtransPayload);
 
-      // Update payment with snap token
-      await this.prisma.paymentTransaction.update({
-        where: { id: payment.id },
-        data: { snapToken },
-      });
-
+      // Return payment with snap token
       return {
         ...payment,
         snapToken,
@@ -146,8 +140,8 @@ export class PaymentsService {
     }
 
     // Find payment by order ID
-    const payment = await this.prisma.paymentTransaction.findUnique({
-      where: { orderId: dto.order_id },
+    const payment = await this.prisma.paymentTransaction.findFirst({
+      where: { externalPaymentId: dto.order_id },
       include: {
         booking: true,
       },
@@ -187,12 +181,12 @@ export class PaymentsService {
       data: {
         status: newStatus,
         paidAt: newStatus === 'paid' ? new Date() : null,
-        midtransTransactionId: dto.transaction_id,
+        externalPaymentId: dto.transaction_id,
       },
     });
 
     // Update booking status if payment is successful
-    if (newStatus === 'paid' && payment.booking.status === 'pending') {
+    if (newStatus === 'paid' && payment.booking.status === 'pending_payment') {
       await this.prisma.booking.update({
         where: { id: payment.bookingId },
         data: { status: bookingStatus },
@@ -200,7 +194,7 @@ export class PaymentsService {
     }
 
     // If payment failed, cancel booking
-    if (newStatus === 'failed' && payment.booking.status === 'pending') {
+    if (newStatus === 'failed' && payment.booking.status === 'pending_payment') {
       await this.prisma.booking.update({
         where: { id: payment.bookingId },
         data: { status: 'cancelled' },
@@ -222,7 +216,6 @@ export class PaymentsService {
                 user: true,
               },
             },
-            subject: true,
           },
         },
       },
@@ -241,8 +234,8 @@ export class PaymentsService {
   }
 
   async getPaymentByOrderId(orderId: string) {
-    const payment = await this.prisma.paymentTransaction.findUnique({
-      where: { orderId },
+    const payment = await this.prisma.paymentTransaction.findFirst({
+      where: { externalPaymentId: orderId },
       include: {
         booking: {
           include: {
@@ -252,7 +245,6 @@ export class PaymentsService {
                 user: true,
               },
             },
-            subject: true,
           },
         },
       },
@@ -289,11 +281,11 @@ export class PaymentsService {
       throw new BadRequestException('Booking must be cancelled first');
     }
 
-    // Update payment status to refund_pending
+    // Update payment status to refunded
     const updated = await this.prisma.paymentTransaction.update({
       where: { id: paymentId },
       data: {
-        status: 'refund_pending',
+        status: 'refunded',
       },
       include: {
         booking: {
