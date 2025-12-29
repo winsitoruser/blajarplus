@@ -263,134 +263,234 @@ export default function DashboardPage() {
 
           {/* Overview Tab */}
           {activeTab === 'overview' && (
-            <>
-              {/* Gamification Stats - Simplified */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-xl p-6 shadow-lg hover:shadow-xl transition">
-                  <Flame className="w-10 h-10 mb-3" />
-                  <div className="text-4xl font-bold mb-1">{userStats.streak}</div>
-                  <div className="text-sm opacity-90">Day Streak 🔥</div>
+            <div className="space-y-6">
+              {/* Hero Stats Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main Stats Card */}
+                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-indigo-100 text-sm font-medium mb-1">Progress Belajar Kamu</p>
+                        <h3 className="text-3xl font-bold">Level {userStats.level}</h3>
+                      </div>
+                      <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+                        <Trophy className="w-10 h-10" />
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between text-sm mb-2">
+                        <span className="text-indigo-100">Progress ke Level {userStats.level + 1}</span>
+                        <span className="font-semibold">{getCurrentLevelXP()} / {getXPForNextLevel()} XP</span>
+                      </div>
+                      <div className="w-full bg-white/20 rounded-full h-2.5">
+                        <div 
+                          className="bg-white h-2.5 rounded-full transition-all duration-500"
+                          style={{ width: `${getProgressPercentage()}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 divide-x divide-gray-100">
+                    <div className="p-4 text-center">
+                      <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-100 rounded-xl mb-2">
+                        <Flame className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900">{userStats.streak}</div>
+                      <div className="text-xs text-gray-500 mt-1">Day Streak</div>
+                    </div>
+                    <div className="p-4 text-center">
+                      <div className="inline-flex items-center justify-center w-12 h-12 bg-purple-100 rounded-xl mb-2">
+                        <BookOpen className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900">{userStats.totalLessons}</div>
+                      <div className="text-xs text-gray-500 mt-1">Lessons</div>
+                    </div>
+                    <div className="p-4 text-center">
+                      <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl mb-2">
+                        <Clock className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900">{userStats.hoursLearned}</div>
+                      <div className="text-xs text-gray-500 mt-1">Hours</div>
+                    </div>
+                    <div className="p-4 text-center">
+                      <div className="inline-flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-xl mb-2">
+                        <Award className="w-6 h-6 text-yellow-600" />
+                      </div>
+                      <div className="text-2xl font-bold text-gray-900">{userStats.achievements}</div>
+                      <div className="text-xs text-gray-500 mt-1">Badges</div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-xl p-6 shadow-lg hover:shadow-xl transition">
-                  <BookOpen className="w-10 h-10 mb-3" />
-                  <div className="text-4xl font-bold mb-1">{userStats.totalLessons}</div>
-                  <div className="text-sm opacity-90">Lessons 📚</div>
-                </div>
-
-                <div className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white rounded-xl p-6 shadow-lg hover:shadow-xl transition">
-                  <Clock className="w-10 h-10 mb-3" />
-                  <div className="text-4xl font-bold mb-1">{userStats.hoursLearned}</div>
-                  <div className="text-sm opacity-90">Hours ⏰</div>
-                </div>
-
-                <div className="bg-gradient-to-br from-yellow-500 to-orange-500 text-white rounded-xl p-6 shadow-lg hover:shadow-xl transition">
-                  <Award className="w-10 h-10 mb-3" />
-                  <div className="text-4xl font-bold mb-1">{userStats.achievements}</div>
-                  <div className="text-sm opacity-90">Badges 🏆</div>
+                {/* Quick Actions Card */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">Aksi Cepat</h3>
+                  <div className="space-y-3">
+                    <Link href="/search">
+                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:shadow-md transition cursor-pointer group">
+                        <div className="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition">
+                          <span className="text-2xl">🔍</span>
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-900">Cari Tutor</div>
+                          <div className="text-xs text-gray-500">Temukan tutor terbaik</div>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link href="/bookings">
+                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:shadow-md transition cursor-pointer group">
+                        <div className="flex-shrink-0 w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition">
+                          <span className="text-2xl">📅</span>
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-900">Booking Saya</div>
+                          <div className="text-xs text-gray-500">Kelola jadwal belajar</div>
+                        </div>
+                      </div>
+                    </Link>
+                    <Link href="/chat">
+                      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl hover:shadow-md transition cursor-pointer group">
+                        <div className="flex-shrink-0 w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition">
+                          <span className="text-2xl">💬</span>
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-900">Pesan</div>
+                          <div className="text-xs text-gray-500">Chat dengan tutor</div>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
                 </div>
               </div>
 
-              {/* Recent Achievements - Simplified */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                  <Trophy className="w-7 h-7 text-yellow-500" />
-                  Achievement Terbaru
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {achievements.filter(a => a.unlocked).slice(0, 4).map(achievement => (
-                    <div key={achievement.id} className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-4 text-center hover:scale-105 transition">
-                      <div className="text-5xl mb-3">{achievement.icon}</div>
-                      <div className="font-bold text-sm mb-1">{achievement.name}</div>
-                      <div className="text-xs text-gray-500">{new Date(achievement.date!).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })}</div>
+              {/* Achievements & Bookings Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Recent Achievements */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                      <Trophy className="w-5 h-5 text-yellow-500" />
+                      Achievement Terbaru
+                    </h3>
+                    <button 
+                      onClick={() => setActiveTab('achievements')}
+                      className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                    >
+                      Lihat Semua
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {achievements.filter(a => a.unlocked).slice(0, 4).map(achievement => (
+                      <div key={achievement.id} className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 text-center hover:scale-105 transition">
+                        <div className="text-4xl mb-2">{achievement.icon}</div>
+                        <div className="font-semibold text-sm text-gray-900">{achievement.name}</div>
+                        <div className="text-xs text-gray-500 mt-1">{new Date(achievement.date!).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Learning Stats */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-5">Statistik Belajar</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                          <TrendingUp className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600">Total Pengeluaran</div>
+                          <div className="text-lg font-bold text-gray-900">Rp {payments.reduce((sum, p) => sum + p.amount, 0).toLocaleString('id-ID')}</div>
+                        </div>
+                      </div>
                     </div>
-                  ))}
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                          <Target className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600">Longest Streak</div>
+                          <div className="text-lg font-bold text-gray-900">{userStats.longestStreak} Hari</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                          <Star className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600">Rank</div>
+                          <div className="text-lg font-bold text-gray-900">{userStats.rank}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Quick Actions - Simplified */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4">Aksi Cepat</h2>
-                <div className="grid grid-cols-3 gap-4">
-                  <Link href="/search">
-                    <div className="bg-white rounded-xl p-6 text-center hover:shadow-lg transition cursor-pointer border-2 border-gray-100 hover:border-primary-300">
-                      <div className="text-5xl mb-3">🔍</div>
-                      <div className="font-semibold">Cari Tutor</div>
-                    </div>
-                  </Link>
+              {/* Recent Bookings */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-lg font-bold text-gray-900">Booking Terbaru</h3>
                   <Link href="/bookings">
-                    <div className="bg-white rounded-xl p-6 text-center hover:shadow-lg transition cursor-pointer border-2 border-gray-100 hover:border-primary-300">
-                      <div className="text-5xl mb-3">📅</div>
-                      <div className="font-semibold">Booking</div>
-                    </div>
-                  </Link>
-                  <Link href="/chat">
-                    <div className="bg-white rounded-xl p-6 text-center hover:shadow-lg transition cursor-pointer border-2 border-gray-100 hover:border-primary-300">
-                      <div className="text-5xl mb-3">💬</div>
-                      <div className="font-semibold">Pesan</div>
-                    </div>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Recent Bookings - Simplified */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold">Booking Terbaru</h2>
-                  <Link href="/bookings">
-                    <Button variant="outline" size="sm">Lihat Semua</Button>
+                    <Button variant="outline" size="sm" className="text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+                      Lihat Semua
+                    </Button>
                   </Link>
                 </div>
 
                 {bookings.length === 0 ? (
-                  <div className="bg-white rounded-xl p-12 text-center border-2 border-dashed border-gray-300">
-                    <div className="text-6xl mb-4">📚</div>
-                    <h3 className="text-xl font-bold mb-2">Belum ada booking</h3>
-                    <p className="text-gray-600 mb-4">
-                      Mulai cari tutor dan buat booking pertama Anda
-                    </p>
+                  <div className="text-center py-12">
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
+                      <span className="text-4xl">📚</span>
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Belum ada booking</h4>
+                    <p className="text-gray-500 mb-4">Mulai cari tutor dan buat booking pertama Anda</p>
                     <Link href="/search">
-                      <Button>Cari Tutor</Button>
+                      <Button className="bg-indigo-600 hover:bg-indigo-700">Cari Tutor Sekarang</Button>
                     </Link>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {bookings.slice(0, 3).map((booking: any) => (
-                      <div key={booking.id} className="bg-white rounded-xl p-5 border-2 border-gray-100 hover:border-primary-200 hover:shadow-md transition">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold">
+                      <div key={booking.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-md">
+                            {user?.role === 'student' 
+                              ? booking.tutor.user.fullName.charAt(0)
+                              : booking.student.fullName.charAt(0)}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900">
                               {user?.role === 'student' 
-                                ? booking.tutor.user.fullName.charAt(0)
-                                : booking.student.fullName.charAt(0)}
+                                ? booking.tutor.user.fullName 
+                                : booking.student.fullName}
                             </div>
-                            <div>
-                              <div className="font-bold text-lg">
-                                {user?.role === 'student' 
-                                  ? booking.tutor.user.fullName 
-                                  : booking.student.fullName}
-                              </div>
-                              <div className="text-sm text-gray-600">
-                                {booking.subject.name} • {booking.duration} jam
-                              </div>
-                              <div className="text-xs text-gray-500 mt-1">
-                                {new Date(booking.scheduledAt).toLocaleDateString('id-ID', {
-                                  weekday: 'short',
-                                  month: 'short',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
-                              </div>
+                            <div className="text-sm text-gray-600">
+                              {booking.subject.name} • {booking.duration} jam
+                            </div>
+                            <div className="text-xs text-gray-500 mt-0.5">
+                              {new Date(booking.scheduledAt).toLocaleDateString('id-ID', {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
                             </div>
                           </div>
-                          <div className="text-right">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(booking.status)}`}>
-                              {getStatusText(booking.status)}
-                            </span>
-                            <div className="mt-2 font-bold text-lg text-gray-800">
-                              Rp {booking.totalAmount.toLocaleString('id-ID')}
-                            </div>
+                        </div>
+                        <div className="text-right">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(booking.status)}`}>
+                            {getStatusText(booking.status)}
+                          </span>
+                          <div className="mt-1.5 font-bold text-gray-900">
+                            Rp {booking.totalAmount.toLocaleString('id-ID')}
                           </div>
                         </div>
                       </div>
@@ -398,7 +498,7 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
-            </>
+            </div>
           )}
 
           {/* Achievements Tab */}
