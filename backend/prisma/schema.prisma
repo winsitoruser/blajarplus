@@ -50,6 +50,7 @@ model User {
   packagePurchases  PackagePurchase[]
   reports           Report[]
   wallet            Wallet?
+  searchHistory     SearchHistory[]
 
   @@index([email])
   @@index([phone])
@@ -649,4 +650,21 @@ model Notification {
   @@index([isRead])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model SearchHistory {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  query       String
+  subject     String?
+  level       String?
+  location    String?
+  resultCount Int      @default(0) @map("result_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("search_history")
 }

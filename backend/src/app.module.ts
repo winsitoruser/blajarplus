@@ -4,6 +4,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { SearchModule } from './search/search.module';
 // import { TutorsModule } from './tutors/tutors.module';
 // import { BookingsModule } from './bookings/bookings.module';
 // import { PaymentsModule } from './payments/payments.module';
@@ -30,6 +31,7 @@ import { UsersModule } from './users/users.module';
     PrismaModule,
     AuthModule,
     UsersModule,
+    SearchModule,
     // TutorsModule, // Temporarily disabled due to TypeScript errors
     // BookingsModule, // Temporarily disabled due to TypeScript errors
     // PaymentsModule, // Temporarily disabled due to TypeScript errors
