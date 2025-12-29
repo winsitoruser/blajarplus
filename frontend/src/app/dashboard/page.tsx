@@ -275,13 +275,14 @@ export default function DashboardPage() {
       const formData = new FormData();
       formData.append('avatar', file);
 
-      // TODO: Implement file upload endpoint
-      // const response = await api.post('/users/me/avatar', formData, {
-      //   headers: { 'Content-Type': 'multipart/form-data' }
-      // });
+      const response = await api.post('/users/me/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       
       setMessage({ type: 'success', text: 'Foto profile berhasil diupload!' });
-      // await fetchUserProfile();
+      setUser(response.data);
+      localStorage.setItem('user', JSON.stringify(response.data));
+      await fetchUserProfile();
     } catch (error: any) {
       console.error('Error uploading avatar:', error);
       setMessage({ 
