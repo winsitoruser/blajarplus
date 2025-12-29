@@ -39,6 +39,11 @@ export default function TutorDashboardPage() {
     completedSessions: 0,
   });
 
+  // Active Students & Sessions State
+  const [activeStudents, setActiveStudents] = useState<any[]>([]);
+  const [upcomingSessions, setUpcomingSessions] = useState<any[]>([]);
+  const [activeSessions, setActiveSessions] = useState<any[]>([]);
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -172,6 +177,147 @@ export default function TutorDashboardPage() {
       activeStudents: 12,
       completedSessions: 38,
     });
+
+    // Mock Active Students with package details
+    setActiveStudents([
+      {
+        id: '1',
+        name: 'Ahmad Rizki',
+        email: 'ahmad@example.com',
+        avatar: 'AR',
+        subject: 'Matematika',
+        packageType: 'package10',
+        totalSessions: 10,
+        completedSessions: 3,
+        remainingSessions: 7,
+        nextSession: '2024-12-30T10:00:00',
+        lastSession: '2024-12-28T10:00:00',
+        totalPaid: 1300000,
+        status: 'active',
+      },
+      {
+        id: '2',
+        name: 'Siti Nurhaliza',
+        email: 'siti@example.com',
+        avatar: 'SN',
+        subject: 'Fisika',
+        packageType: 'package5',
+        totalSessions: 5,
+        completedSessions: 2,
+        remainingSessions: 3,
+        nextSession: '2024-12-31T14:00:00',
+        lastSession: '2024-12-27T14:00:00',
+        totalPaid: 825000,
+        status: 'active',
+      },
+      {
+        id: '3',
+        name: 'Budi Santoso',
+        email: 'budi@example.com',
+        avatar: 'BS',
+        subject: 'Matematika',
+        packageType: 'single',
+        totalSessions: 1,
+        completedSessions: 0,
+        remainingSessions: 1,
+        nextSession: '2025-01-02T09:00:00',
+        lastSession: null,
+        totalPaid: 150000,
+        status: 'active',
+      },
+      {
+        id: '4',
+        name: 'Dewi Lestari',
+        email: 'dewi@example.com',
+        avatar: 'DL',
+        subject: 'Matematika',
+        packageType: 'package10',
+        totalSessions: 10,
+        completedSessions: 8,
+        remainingSessions: 2,
+        nextSession: '2025-01-03T16:00:00',
+        lastSession: '2024-12-29T16:00:00',
+        totalPaid: 1300000,
+        status: 'active',
+      },
+      {
+        id: '5',
+        name: 'Rina Susanti',
+        email: 'rina@example.com',
+        avatar: 'RS',
+        subject: 'Fisika',
+        packageType: 'package5',
+        totalSessions: 5,
+        completedSessions: 1,
+        remainingSessions: 4,
+        nextSession: '2025-01-04T11:00:00',
+        lastSession: '2024-12-26T11:00:00',
+        totalPaid: 825000,
+        status: 'active',
+      },
+    ]);
+
+    // Mock Upcoming Sessions
+    setUpcomingSessions([
+      {
+        id: 's1',
+        studentName: 'Ahmad Rizki',
+        subject: 'Matematika',
+        scheduledAt: '2024-12-30T10:00:00',
+        duration: 2,
+        type: 'online',
+        sessionNumber: 4,
+        totalSessions: 10,
+        meetingLink: 'https://meet.google.com/abc-defg-hij',
+      },
+      {
+        id: 's2',
+        studentName: 'Siti Nurhaliza',
+        subject: 'Fisika',
+        scheduledAt: '2024-12-31T14:00:00',
+        duration: 1.5,
+        type: 'online',
+        sessionNumber: 3,
+        totalSessions: 5,
+        meetingLink: 'https://meet.google.com/xyz-uvwx-yz',
+      },
+      {
+        id: 's3',
+        studentName: 'Budi Santoso',
+        subject: 'Matematika',
+        scheduledAt: '2025-01-02T09:00:00',
+        duration: 2,
+        type: 'offline',
+        sessionNumber: 1,
+        totalSessions: 1,
+        location: 'Cafe Kopi, Jakarta Selatan',
+      },
+      {
+        id: 's4',
+        studentName: 'Dewi Lestari',
+        subject: 'Matematika',
+        scheduledAt: '2025-01-03T16:00:00',
+        duration: 2,
+        type: 'online',
+        sessionNumber: 9,
+        totalSessions: 10,
+        meetingLink: 'https://meet.google.com/klm-nopq-rst',
+      },
+    ]);
+
+    // Mock Active Sessions (happening today)
+    setActiveSessions([
+      {
+        id: 'as1',
+        studentName: 'Ahmad Rizki',
+        subject: 'Matematika',
+        scheduledAt: new Date().toISOString(),
+        duration: 2,
+        type: 'online',
+        status: 'in-progress',
+        meetingLink: 'https://meet.google.com/abc-defg-hij',
+      },
+    ]);
 
     setLoading(false);
   };
@@ -571,51 +717,186 @@ export default function TutorDashboardPage() {
           {/* Tab Content */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Layanan Aktif</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {services.filter(s => s.isActive).map(service => (
-                        <div key={service.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              {/* Active Sessions Alert */}
+              {activeSessions.length > 0 && (
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="text-3xl">🔴</div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-blue-900">Sesi Sedang Berlangsung</div>
+                        <div className="text-sm text-blue-700">
+                          {activeSessions[0].studentName} - {activeSessions[0].subject}
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => window.open(activeSessions[0].meetingLink, '_blank')}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        Join Meeting
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Upcoming Sessions */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Sesi Mendatang</CardTitle>
+                    <span className="text-sm text-gray-600">{upcomingSessions.length} sesi</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {upcomingSessions.slice(0, 4).map(session => (
+                      <div key={session.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+                            <span className="text-xl">{session.studentName.charAt(0)}</span>
+                          </div>
                           <div>
-                            <div className="font-medium">{service.subject} - {service.level}</div>
-                            <div className="text-sm text-gray-600">
-                              Rp {service.pricePerHour.toLocaleString('id-ID')}/jam
+                            <div className="font-semibold">{session.studentName}</div>
+                            <div className="text-sm text-gray-600">{session.subject}</div>
+                            <div className="text-sm text-gray-500">
+                              Sesi {session.sessionNumber} dari {session.totalSessions} • {session.duration} jam
                             </div>
                           </div>
-                          {service.offerFreeTrial && (
-                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
-                              Free Trial
-                            </span>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">
+                            {new Date(session.scheduledAt).toLocaleDateString('id-ID', {
+                              weekday: 'short',
+                              day: 'numeric',
+                              month: 'short'
+                            })}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {new Date(session.scheduledAt).toLocaleTimeString('id-ID', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            session.type === 'online' 
+                              ? 'bg-blue-100 text-blue-700' 
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                            {session.type === 'online' ? '🌐 Online' : '📍 Offline'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Active Students with Package Details */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Siswa Aktif & Perkiraan Kelas</CardTitle>
+                    <span className="text-sm text-gray-600">{activeStudents.length} siswa</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {activeStudents.map(student => {
+                      const progress = (student.completedSessions / student.totalSessions) * 100;
+                      const packageName = student.packageType === 'package10' 
+                        ? 'Paket 10 Sesi' 
+                        : student.packageType === 'package5' 
+                        ? 'Paket 5 Sesi' 
+                        : 'Single Session';
+                      
+                      return (
+                        <div key={student.id} className="p-4 border rounded-lg hover:shadow-md transition">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 bg-gradient-to-br from-primary-400 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                {student.avatar}
+                              </div>
+                              <div>
+                                <div className="font-semibold text-lg">{student.name}</div>
+                                <div className="text-sm text-gray-600">{student.subject}</div>
+                                <div className="text-xs text-gray-500">{packageName}</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm text-gray-600">Total Dibayar</div>
+                              <div className="font-semibold text-green-600">
+                                Rp {student.totalPaid.toLocaleString('id-ID')}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="mb-3">
+                            <div className="flex items-center justify-between text-sm mb-1">
+                              <span className="text-gray-600">Progress Kelas</span>
+                              <span className="font-medium">{student.completedSessions}/{student.totalSessions} sesi</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-gradient-to-r from-primary-500 to-primary-600 h-2 rounded-full transition-all"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Details Grid */}
+                          <div className="grid grid-cols-3 gap-3 text-sm">
+                            <div className="bg-blue-50 p-2 rounded">
+                              <div className="text-xs text-blue-600 mb-1">Selesai</div>
+                              <div className="font-semibold text-blue-700">{student.completedSessions} sesi</div>
+                            </div>
+                            <div className="bg-green-50 p-2 rounded">
+                              <div className="text-xs text-green-600 mb-1">Sisa Kelas</div>
+                              <div className="font-semibold text-green-700">{student.remainingSessions} sesi</div>
+                            </div>
+                            <div className="bg-purple-50 p-2 rounded">
+                              <div className="text-xs text-purple-600 mb-1">Perkiraan</div>
+                              <div className="font-semibold text-purple-700">
+                                {student.remainingSessions * 2} jam
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Next Session */}
+                          {student.nextSession && (
+                            <div className="mt-3 pt-3 border-t">
+                              <div className="flex items-center justify-between text-sm">
+                                <div className="text-gray-600">Sesi Berikutnya:</div>
+                                <div className="font-medium">
+                                  {new Date(student.nextSession).toLocaleDateString('id-ID', {
+                                    weekday: 'short',
+                                    day: 'numeric',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Last Session */}
+                          {student.lastSession && (
+                            <div className="text-xs text-gray-500 mt-2">
+                              Terakhir: {new Date(student.lastSession).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              })}
+                            </div>
                           )}
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Testimonial Terbaru</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {testimonials.filter(t => t.isApproved).slice(0, 3).map(testimonial => (
-                        <div key={testimonial.id} className="p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="font-medium">{testimonial.studentName}</div>
-                            <div className="text-yellow-500">{'⭐'.repeat(testimonial.rating)}</div>
-                          </div>
-                          <p className="text-sm text-gray-600">{testimonial.comment}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
