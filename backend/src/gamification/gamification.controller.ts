@@ -39,17 +39,17 @@ export class GamificationController {
     );
   }
 
-  @Post('complete-lesson')
-  @ApiOperation({ summary: 'Mark lesson as complete and update progress' })
-  async completeLesson(
+  @Post('complete-activity')
+  @ApiOperation({ summary: 'Mark activity as complete and update progress' })
+  async completeActivity(
     @Req() req,
-    @Body() body: { bookingId: string; duration: number; rating?: number }
+    @Body() body: { duration: number; activityType: string; description: string }
   ) {
     return this.gamificationService.updateProgress(
       req.user.id,
-      body.bookingId,
       body.duration,
-      body.rating
+      body.activityType,
+      body.description
     );
   }
 }

@@ -10,6 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Award, TrendingUp, Flame, Star, Trophy, Target, BookOpen, Clock, CreditCard, Calendar, User, Camera, Phone, Mail, Lock, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import BannerCarousel from '@/components/BannerCarousel';
+import ProgressCard from '@/components/gamification/ProgressCard';
+import AchievementsCard from '@/components/gamification/AchievementsCard';
+import LeaderboardCard from '@/components/gamification/LeaderboardCard';
 import api from '@/lib/api';
 
 export default function DashboardPage() {
@@ -465,14 +468,14 @@ export default function DashboardPage() {
                 Overview
               </button>
               <button
-                onClick={() => setActiveTab('achievements')}
+                onClick={() => setActiveTab('gamification')}
                 className={`pb-3 px-2 font-medium transition-colors ${
-                  activeTab === 'achievements'
+                  activeTab === 'gamification'
                     ? 'text-primary-600 border-b-2 border-primary-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                Achievements
+                🏆 Gamification
               </button>
               <button
                 onClick={() => setActiveTab('history')}
@@ -940,6 +943,25 @@ export default function DashboardPage() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {/* Gamification Tab */}
+          {activeTab === 'gamification' && (
+            <div className="space-y-6">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold mb-2">🎮 Gamification & Achievements</h2>
+                <p className="text-gray-600">Track your learning progress, unlock achievements, and compete with other learners!</p>
+              </div>
+
+              {/* Progress and Leaderboard Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ProgressCard />
+                <LeaderboardCard />
+              </div>
+
+              {/* Achievements Section */}
+              <AchievementsCard />
             </div>
           )}
 

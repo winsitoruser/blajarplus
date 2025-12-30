@@ -13,6 +13,7 @@ import { AdminModule } from './admin/admin.module';
 import { WithdrawalsModule } from './withdrawals/withdrawals.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { BannersModule } from './banners/banners.module';
+import { GamificationModule } from './gamification/gamification.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { BannersModule } from './banners/banners.module';
     WithdrawalsModule,
     NotificationsModule,
     BannersModule,
+    GamificationModule,
   ],
 })
 export class AppModule {}

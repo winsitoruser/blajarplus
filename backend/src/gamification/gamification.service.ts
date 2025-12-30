@@ -37,13 +37,14 @@ export class GamificationService {
       progress = await this.prisma.userProgress.create({
         data: {
           userId,
-          totalXP: 0,
+          totalXp: 0,
+          xp: 0,
           level: 1,
-          currentStreak: 0,
+          streak: 0,
           longestStreak: 0,
-          totalLessons: 0,
-          hoursLearned: 0,
-          rank: 'Bronze',
+          totalSessions: 0,
+          totalHours: 0,
+          lastActiveDate: new Date(),
         },
       });
     }
@@ -52,28 +53,27 @@ export class GamificationService {
   }
 
   // Update user progress after completing a lesson
-  async updateProgress(userId: string, bookingId: string, duration: number, rating?: number) {
-    const xpEarned = this.calculateXP(duration, rating);
+  async updateProgress(userId: string, duration: number, activityType: string, description: string) {
+    const xpEarned = this.calculateXP(duration);
     
     // Get current progress
     const progress = await this.getUserProgress(userId);
     
     // Calculate new values
-    const newTotalXP = progress.totalXP + xpEarned;
+    const newTotalXP = progress.totalXp + xpEarned;
     const newLevel = this.calculateLevel(newTotalXP);
-    const newRank = this.calculateRank(newLevel);
-    const newTotalLessons = progress.totalLessons + 1;
-    const newHoursLearned = Number(progress.hoursLearned) + duration;
+    const newTotalSessions = progress.totalSessions + 1;
+    const newTotalHours = Number(progress.totalHours) + duration;
 
     // Update streak
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    let newCurrentStreak = progress.currentStreak;
+    let newStreak = progress.streak;
     let newLongestStreak = progress.longestStreak;
 
-    if (progress.lastLessonDate) {
-      const lastDate = new Date(progress.lastLessonDate);
+    if (progress.lastActiveDate) {
+      const lastDate = new Date(progress.lastActiveDate);
       lastDate.setHours(0, 0, 0, 0);
       
       const daysDiff = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -82,42 +82,33 @@ export class GamificationService {
         // Same day, no change to streak
       } else if (daysDiff === 1) {
         // Consecutive day, increment streak
-        newCurrentStreak += 1;
-        newLongestStreak = Math.max(newLongestStreak, newCurrentStreak);
+        newStreak += 1;
+        newLongestStreak = Math.max(newLongestStreak, newStreak);
       } else {
         // Streak broken
-        newCurrentStreak = 1;
+        newStreak = 1;
       }
     } else {
-      newCurrentStreak = 1;
+      newStreak = 1;
       newLongestStreak = 1;
     }
+
+    // Calculate XP for current level
+    const currentLevelXP = newTotalXP - (progress.level * progress.level * 100);
+    const xpForNextLevel = (newLevel + 1) * (newLevel + 1) * 100 - newLevel * newLevel * 100;
 
     // Update progress
     const updatedProgress = await this.prisma.userProgress.update({
       where: { userId },
       data: {
-        totalXP: newTotalXP,
+        totalXp: newTotalXP,
+        xp: currentLevelXP,
         level: newLevel,
-        rank: newRank,
-        currentStreak: newCurrentStreak,
+        streak: newStreak,
         longestStreak: newLongestStreak,
-        totalLessons: newTotalLessons,
-        hoursLearned: newHoursLearned,
-        lastLessonDate: new Date(),
-      },
-    });
-
-    // Get booking details for learning history
-    const booking = await this.prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: {
-        tutor: {
-          include: {
-            user: true,
-          },
-        },
-        subject: true,
+        totalSessions: newTotalSessions,
+        totalHours: newTotalHours,
+        lastActiveDate: new Date(),
       },
     });
 
@@ -125,13 +116,12 @@ export class GamificationService {
     await this.prisma.learningHistory.create({
       data: {
         userId,
-        bookingId,
-        subject: booking.subject.name,
-        tutorName: booking.tutor.user.fullName,
-        duration,
-        rating,
+        activityType,
+        description,
         xpEarned,
-        notes: '',
+        metadata: {
+          duration,
+        },
       },
     });
 
@@ -143,6 +133,7 @@ export class GamificationService {
       xpEarned,
       levelUp: newLevel > progress.level,
       newLevel,
+      rank: this.calculateRank(newLevel),
     };
   }
 
@@ -157,75 +148,66 @@ export class GamificationService {
       include: { achievement: true },
     });
 
-    const unlockedCodes = new Set(
+    const unlockedIds = new Set(
       userAchievements
-        .filter(ua => ua.progress >= ua.achievement.requirement)
-        .map(ua => ua.achievement.code)
+        .filter(ua => ua.isCompleted)
+        .map(ua => ua.achievementId)
     );
 
     const newlyUnlocked = [];
 
     for (const achievement of achievements) {
-      if (unlockedCodes.has(achievement.code)) continue;
+      if (unlockedIds.has(achievement.id)) continue;
 
       let currentProgress = 0;
       let shouldUnlock = false;
 
-      switch (achievement.code) {
-        case 'first_lesson':
-          currentProgress = progress.totalLessons;
-          shouldUnlock = progress.totalLessons >= 1;
-          break;
-        case 'week_warrior':
-          currentProgress = progress.currentStreak;
-          shouldUnlock = progress.currentStreak >= 7;
-          break;
-        case 'knowledge_seeker':
-          currentProgress = progress.totalLessons;
-          shouldUnlock = progress.totalLessons >= 10;
-          break;
-        case 'dedicated':
-          currentProgress = progress.totalLessons;
-          shouldUnlock = progress.totalLessons >= 20;
-          break;
-        case 'scholar':
-          currentProgress = progress.totalLessons;
-          shouldUnlock = progress.totalLessons >= 50;
-          break;
-        case 'marathon':
-          currentProgress = Math.floor(Number(progress.hoursLearned));
-          shouldUnlock = Number(progress.hoursLearned) >= 3;
-          break;
-        case 'master':
-          currentProgress = progress.level;
-          shouldUnlock = progress.level >= 20;
-          break;
-        case 'unstoppable':
-          currentProgress = progress.currentStreak;
-          shouldUnlock = progress.currentStreak >= 30;
-          break;
+      // Check achievement requirements based on type
+      if (achievement.type === 'milestone') {
+        currentProgress = progress.totalSessions;
+        shouldUnlock = progress.totalSessions >= achievement.requirement;
+      } else if (achievement.type === 'streak') {
+        currentProgress = progress.streak;
+        shouldUnlock = progress.streak >= achievement.requirement;
+      } else if (achievement.type === 'completion') {
+        currentProgress = progress.totalSessions;
+        shouldUnlock = progress.totalSessions >= achievement.requirement;
+      } else if (achievement.type === 'social') {
+        currentProgress = 0;
+        shouldUnlock = false;
       }
 
       // Update or create user achievement
-      const existingUA = userAchievements.find(ua => ua.achievement.code === achievement.code);
+      const existingUA = userAchievements.find(ua => ua.achievementId === achievement.id);
       
-      if (existingUA) {
+      if (existingUA && !existingUA.isCompleted && shouldUnlock) {
+        await this.prisma.userAchievement.update({
+          where: { id: existingUA.id },
+          data: { 
+            progress: currentProgress,
+            isCompleted: true,
+            completedAt: new Date(),
+          },
+        });
+        newlyUnlocked.push(achievement);
+      } else if (existingUA) {
         await this.prisma.userAchievement.update({
           where: { id: existingUA.id },
           data: { progress: currentProgress },
         });
       } else {
-        await this.prisma.userAchievement.create({
+        const newUA = await this.prisma.userAchievement.create({
           data: {
             userId,
             achievementId: achievement.id,
             progress: currentProgress,
+            isCompleted: shouldUnlock,
+            completedAt: shouldUnlock ? new Date() : null,
           },
         });
-      }
-
-      if (shouldUnlock && !existingUA) {
-        newlyUnlocked.push(achievement);
+        if (shouldUnlock) {
+          newlyUnlocked.push(achievement);
+        }
       }
     }
 
@@ -259,16 +241,16 @@ export class GamificationService {
 
       return {
         id: achievement.id,
-        code: achievement.code,
         name: achievement.name,
         description: achievement.description,
         icon: achievement.icon,
+        type: achievement.type,
         category: achievement.category,
         requirement: achievement.requirement,
-        xpReward: achievement.xpReward,
+        points: achievement.points,
         progress: currentProgress,
         unlocked,
-        unlockedAt: unlocked ? userAchievement.unlockedAt : null,
+        completedAt: unlocked && userAchievement ? userAchievement.completedAt : null,
       };
     });
   }
@@ -277,7 +259,7 @@ export class GamificationService {
   async getLearningHistory(userId: string, limit = 10) {
     return this.prisma.learningHistory.findMany({
       where: { userId },
-      orderBy: { completedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: limit,
     });
   }
@@ -287,7 +269,7 @@ export class GamificationService {
     return this.prisma.userProgress.findMany({
       take: limit,
       orderBy: [
-        { totalXP: 'desc' },
+        { totalXp: 'desc' },
         { level: 'desc' },
       ],
       include: {

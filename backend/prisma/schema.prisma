@@ -47,6 +47,11 @@ model User {
   reports           Report[]
   wallet            Wallet?
   studentMaterials  StudentMaterial[] @relation("StudentMaterials")
+  
+  // Gamification Relations
+  userAchievements  UserAchievement[]
+  userProgress      UserProgress?
+  learningHistory   LearningHistory[]
 
   @@index([email])
   @@index([phone])
@@ -784,4 +789,100 @@ model Banner {
   @@index([startDate])
   @@index([endDate])
   @@map("banners")
+}
+
+// Gamification System Models
+enum AchievementType {
+  milestone
+  streak
+  completion
+  social
+  special
+}
+
+enum AchievementCategory {
+  learning
+  engagement
+  social
+  progress
+  special
+}
+
+model Achievement {
+  id          String              @id @default(uuid())
+  name        String
+  description String              @db.Text
+  type        AchievementType
+  category    AchievementCategory
+  icon        String?
+  points      Int                 @default(0)
+  requirement Int                 @default(1)
+  isActive    Boolean             @default(true) @map("is_active")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  userAchievements UserAchievement[]
+
+  @@index([type])
+  @@index([category])
+  @@index([isActive])
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String      @map("user_id")
+  achievementId String      @map("achievement_id")
+  progress      Int         @default(0)
+  isCompleted   Boolean     @default(false) @map("is_completed")
+  completedAt   DateTime?   @map("completed_at")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+  @@index([isCompleted])
+  @@map("user_achievements")
+}
+
+model UserProgress {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  level           Int      @default(1)
+  xp              Int      @default(0)
+  totalXp         Int      @default(0) @map("total_xp")
+  streak          Int      @default(0)
+  longestStreak   Int      @default(0) @map("longest_streak")
+  lastActiveDate  DateTime @default(now()) @map("last_active_date")
+  totalSessions   Int      @default(0) @map("total_sessions")
+  totalHours      Float    @default(0) @map("total_hours")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([level])
+  @@map("user_progress")
+}
+
+model LearningHistory {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  activityType String  @map("activity_type")
+  description String   @db.Text
+  xpEarned    Int      @default(0) @map("xp_earned")
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([activityType])
+  @@index([createdAt])
+  @@map("learning_history")
 }
