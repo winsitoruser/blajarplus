@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { authApi } from '@/lib/api';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     emailOrPhone: '',
     password: '',
@@ -27,17 +29,32 @@ export default function LoginPage() {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
-      // Redirect based on role
+      // Show success notification
       const user = response.data.user;
-      if (user.role === 'admin') {
-        router.push('/admin/dashboard');
-      } else if (user.role === 'tutor') {
-        router.push('/tutor/dashboard');
-      } else {
-        router.push('/dashboard');
-      }
+      toast({
+        variant: 'success',
+        title: '✅ Login Berhasil!',
+        description: `Selamat datang kembali, ${user.fullName}!`,
+      });
+      
+      // Redirect based on role after short delay
+      setTimeout(() => {
+        if (user.role === 'admin') {
+          router.push('/admin/dashboard');
+        } else if (user.role === 'tutor') {
+          router.push('/tutor/dashboard');
+        } else {
+          router.push('/dashboard');
+        }
+      }, 1000);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login gagal. Silakan coba lagi.');
+      const errorMessage = err.response?.data?.message || 'Login gagal. Silakan coba lagi.';
+      setError(errorMessage);
+      toast({
+        variant: 'destructive',
+        title: '❌ Login Gagal',
+        description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }

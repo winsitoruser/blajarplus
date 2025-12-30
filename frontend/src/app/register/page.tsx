@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { authApi } from '@/lib/api';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -26,12 +28,24 @@ export default function RegisterPage() {
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Password tidak cocok');
+      const errorMsg = 'Password tidak cocok';
+      setError(errorMsg);
+      toast({
+        variant: 'destructive',
+        title: '❌ Validasi Gagal',
+        description: errorMsg,
+      });
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('Password minimal 6 karakter');
+      const errorMsg = 'Password minimal 6 karakter';
+      setError(errorMsg);
+      toast({
+        variant: 'destructive',
+        title: '❌ Validasi Gagal',
+        description: errorMsg,
+      });
       return;
     }
 
@@ -43,9 +57,25 @@ export default function RegisterPage() {
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
-      router.push('/dashboard');
+      // Show success notification
+      toast({
+        variant: 'success',
+        title: '✅ Registrasi Berhasil!',
+        description: `Selamat datang, ${response.data.user.fullName}! Akun Anda telah dibuat.`,
+      });
+      
+      // Redirect after short delay
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 1000);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registrasi gagal. Silakan coba lagi.');
+      const errorMessage = err.response?.data?.message || 'Registrasi gagal. Silakan coba lagi.';
+      setError(errorMessage);
+      toast({
+        variant: 'destructive',
+        title: '❌ Registrasi Gagal',
+        description: errorMessage,
+      });
     } finally {
       setLoading(false);
     }

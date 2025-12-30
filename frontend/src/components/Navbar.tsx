@@ -4,18 +4,18 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 
 export function Navbar() {
   const router = useRouter();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    
     if (token && userData) {
       setIsLoggedIn(true);
       setUser(JSON.parse(userData));
@@ -23,11 +23,23 @@ export function Navbar() {
   }, []);
 
   const handleLogout = () => {
+    const userName = user?.fullName || 'User';
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setIsLoggedIn(false);
     setUser(null);
-    router.push('/');
+    
+    // Show logout notification
+    toast({
+      variant: 'success',
+      title: '✅ Logout Berhasil!',
+      description: `Sampai jumpa lagi, ${userName}!`,
+    });
+    
+    // Redirect after short delay
+    setTimeout(() => {
+      router.push('/');
+    }, 1000);
   };
 
   return (
@@ -88,11 +100,11 @@ export function Navbar() {
 
           <div className="md:hidden">
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="text-white hover:text-secondary-200"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                {isMenuOpen ? (
+                {mobileMenuOpen ? (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 ) : (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -103,7 +115,7 @@ export function Navbar() {
         </div>
       </div>
 
-      {isMenuOpen && (
+      {mobileMenuOpen && (
         <div className="md:hidden border-t border-white/20 bg-primary-700">
           <div className="px-2 pt-2 pb-3 space-y-1">
             <Link
