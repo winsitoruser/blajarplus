@@ -28,7 +28,7 @@ export default function AdminDashboard() {
         return
       }
 
-      const [statsRes, activitiesRes, businessRes, transactionsRes] = await Promise.all([
+      const [statsRes, activitiesRes, businessRes, transactionsRes, tutorsRes] = await Promise.all([
         axios.get(`${API_URL}/admin/stats`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
@@ -41,6 +41,9 @@ export default function AdminDashboard() {
         axios.get(`${API_URL}/admin/transactions?limit=5`, {
           headers: { Authorization: `Bearer ${token}` },
         }).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/admin/tutors?status=verified&limit=5`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => ({ data: { data: [] } })),
       ])
 
       setStats(statsRes.data)
@@ -48,13 +51,18 @@ export default function AdminDashboard() {
       setBusinessData(businessRes.data)
       setTransactions(transactionsRes.data?.data || [])
       
-      // Generate mock active tutors data from stats
-      const mockActiveTutors = [
-        { id: 1, name: 'Dr. Ahmad Hidayat', subject: 'Matematika', students: 15, rating: 4.9, earnings: 12500000, status: 'active' },
-        { id: 2, name: 'Sarah Johnson', subject: 'Bahasa Inggris', students: 12, rating: 4.8, earnings: 9800000, status: 'active' },
-        { id: 3, name: 'Budi Santoso', subject: 'Fisika', students: 10, rating: 4.7, earnings: 8200000, status: 'active' },
-      ]
-      setActiveTutors(mockActiveTutors)
+      // Format active tutors data from API
+      const tutorsData = tutorsRes.data?.data || []
+      const formattedTutors = tutorsData.map((tutor: any) => ({
+        id: tutor.id,
+        name: tutor.user?.fullName || 'Unknown',
+        subject: tutor.subjects?.[0]?.name || 'N/A',
+        students: tutor._count?.bookings || 0,
+        rating: tutor.rating || 0,
+        earnings: tutor.totalEarnings || 0,
+        status: tutor.verificationStatus || 'pending'
+      }))
+      setActiveTutors(formattedTutors)
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
     } finally {
