@@ -1,8 +1,9 @@
-import { Controller, Get, Put, Param, Body, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Put, Post, Delete, Param, Body, UseGuards, Query, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { VerifyTutorDto } from './dto';
+import { CreateAdminDto, UpdateAdminDto } from './dto/create-admin.dto';
 
 @ApiTags('admin')
 @Controller('admin')
@@ -102,5 +103,42 @@ export class AdminController {
   @ApiOperation({ summary: 'Get recent activities' })
   getRecentActivities(@Query('limit') limit?: number) {
     return this.adminService.getRecentActivities(limit || 20);
+  }
+
+  // Admin Management Endpoints
+  @Get('admins')
+  @ApiOperation({ summary: 'Get all admins' })
+  getAllAdmins(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.adminService.getAllAdmins(page, limit);
+  }
+
+  @Get('admins/:id')
+  @ApiOperation({ summary: 'Get admin by ID' })
+  getAdminById(@Param('id') id: string) {
+    return this.adminService.getAdminById(id);
+  }
+
+  @Post('admins')
+  @ApiOperation({ summary: 'Create new admin' })
+  createAdmin(@Body() dto: CreateAdminDto) {
+    return this.adminService.createAdmin(dto);
+  }
+
+  @Put('admins/:id')
+  @ApiOperation({ summary: 'Update admin' })
+  updateAdmin(@Param('id') id: string, @Body() dto: UpdateAdminDto) {
+    return this.adminService.updateAdmin(id, dto);
+  }
+
+  @Delete('admins/:id')
+  @ApiOperation({ summary: 'Delete admin' })
+  deleteAdmin(@Param('id') id: string, @Req() req) {
+    return this.adminService.deleteAdmin(id, req.user.id);
+  }
+
+  @Post('admins/:id/toggle-status')
+  @ApiOperation({ summary: 'Toggle admin status (active/suspended)' })
+  toggleAdminStatus(@Param('id') id: string, @Req() req) {
+    return this.adminService.toggleAdminStatus(id, req.user.id);
   }
 }

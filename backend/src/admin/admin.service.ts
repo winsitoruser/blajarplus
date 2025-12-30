@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { VerifyTutorDto } from './dto';
+import { CreateAdminDto, UpdateAdminDto } from './dto/create-admin.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AdminService {
@@ -705,5 +707,198 @@ export class AdminService {
     return activities
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, limit);
+  }
+
+  // Admin Management Methods
+  async getAllAdmins(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+
+    const [admins, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where: { role: 'admin' },
+        select: {
+          id: true,
+          email: true,
+          phone: true,
+          fullName: true,
+          avatarUrl: true,
+          status: true,
+          lastLoginAt: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.user.count({ where: { role: 'admin' } }),
+    ]);
+
+    return {
+      data: admins,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getAdminById(id: string) {
+    const admin = await this.prisma.user.findFirst({
+      where: { id, role: 'admin' },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        fullName: true,
+        avatarUrl: true,
+        status: true,
+        lastLoginAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!admin) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    return admin;
+  }
+
+  async createAdmin(dto: CreateAdminDto) {
+    // Check if email already exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('Email already exists');
+    }
+
+    // Check if phone already exists (if provided)
+    if (dto.phone) {
+      const existingPhone = await this.prisma.user.findUnique({
+        where: { phone: dto.phone },
+      });
+
+      if (existingPhone) {
+        throw new ConflictException('Phone number already exists');
+      }
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    // Create admin user
+    const admin = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        phone: dto.phone,
+        fullName: dto.fullName,
+        passwordHash: hashedPassword,
+        role: 'admin',
+        status: 'active',
+      },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        fullName: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+
+    return admin;
+  }
+
+  async updateAdmin(id: string, dto: UpdateAdminDto) {
+    const admin = await this.prisma.user.findFirst({
+      where: { id, role: 'admin' },
+    });
+
+    if (!admin) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    const updateData: any = {};
+
+    if (dto.fullName) updateData.fullName = dto.fullName;
+    if (dto.phone) updateData.phone = dto.phone;
+    
+    if (dto.password) {
+      updateData.passwordHash = await bcrypt.hash(dto.password, 10);
+    }
+
+    const updatedAdmin = await this.prisma.user.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        fullName: true,
+        status: true,
+        updatedAt: true,
+      },
+    });
+
+    return updatedAdmin;
+  }
+
+  async deleteAdmin(id: string, currentAdminId: string) {
+    // Prevent self-deletion
+    if (id === currentAdminId) {
+      throw new BadRequestException('Cannot delete your own account');
+    }
+
+    const admin = await this.prisma.user.findFirst({
+      where: { id, role: 'admin' },
+    });
+
+    if (!admin) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    // Soft delete by setting status to deleted
+    await this.prisma.user.update({
+      where: { id },
+      data: { status: 'deleted' },
+    });
+
+    return { message: 'Admin deleted successfully' };
+  }
+
+  async toggleAdminStatus(id: string, currentAdminId: string) {
+    // Prevent self-suspension
+    if (id === currentAdminId) {
+      throw new BadRequestException('Cannot change your own status');
+    }
+
+    const admin = await this.prisma.user.findFirst({
+      where: { id, role: 'admin' },
+    });
+
+    if (!admin) {
+      throw new NotFoundException('Admin not found');
+    }
+
+    const newStatus = admin.status === 'active' ? 'suspended' : 'active';
+
+    const updatedAdmin = await this.prisma.user.update({
+      where: { id },
+      data: { status: newStatus },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        status: true,
+      },
+    });
+
+    return updatedAdmin;
   }
 }
