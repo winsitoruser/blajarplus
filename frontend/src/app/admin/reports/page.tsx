@@ -45,6 +45,131 @@ export default function AdminReports() {
     }).format(amount)
   }
 
+  const exportToCSV = () => {
+    if (!stats) return
+
+    const csvData = [
+      ['BlajarPlus - Platform Report'],
+      ['Generated:', new Date().toLocaleString('id-ID')],
+      ['Time Range:', `Last ${timeRange} days`],
+      [''],
+      ['Category', 'Metric', 'Value'],
+      ['Users', 'Total Users', stats.users?.total || 0],
+      ['Users', 'Students', stats.users?.students || 0],
+      ['Users', 'Tutors', stats.users?.tutors || 0],
+      ['Tutors', 'Total Tutors', stats.tutors?.total || 0],
+      ['Tutors', 'Verified', stats.tutors?.verified || 0],
+      ['Tutors', 'Pending', stats.tutors?.pending || 0],
+      ['Tutors', 'Rejected', stats.tutors?.rejected || 0],
+      ['Bookings', 'Total Bookings', stats.bookings?.total || 0],
+      ['Bookings', 'Completed', stats.bookings?.completed || 0],
+      ['Bookings', 'Active', stats.bookings?.active || 0],
+      ['Revenue', 'Total Revenue', formatCurrency(stats.revenue?.total || 0)],
+      ['Revenue', 'Platform Fee', formatCurrency(stats.revenue?.platform || 0)],
+      ['Revenue', 'Tutor Earnings', formatCurrency(stats.revenue?.tutors || 0)],
+      ['Withdrawals', 'Pending', stats.withdrawals?.pending || 0],
+    ]
+
+    const csvContent = csvData.map(row => row.join(',')).join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `blajarplus-report-${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const exportToPDF = () => {
+    if (!stats) return
+
+    // Create a printable version
+    const printWindow = window.open('', '', 'height=600,width=800')
+    if (!printWindow) return
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>BlajarPlus Platform Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; }
+          h1 { color: #2563eb; border-bottom: 3px solid #2563eb; padding-bottom: 10px; }
+          h2 { color: #4b5563; margin-top: 30px; }
+          .header { margin-bottom: 30px; }
+          .info { color: #6b7280; margin: 5px 0; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+          th { background-color: #f3f4f6; font-weight: bold; }
+          .metric-value { font-weight: bold; color: #2563eb; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e7eb; color: #6b7280; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📚 BlajarPlus Platform Report</h1>
+          <p class="info">Generated: ${new Date().toLocaleString('id-ID')}</p>
+          <p class="info">Time Range: Last ${timeRange} days</p>
+        </div>
+
+        <h2>👥 User Statistics</h2>
+        <table>
+          <tr><th>Metric</th><th>Value</th></tr>
+          <tr><td>Total Users</td><td class="metric-value">${stats.users?.total || 0}</td></tr>
+          <tr><td>Students</td><td class="metric-value">${stats.users?.students || 0}</td></tr>
+          <tr><td>Tutors</td><td class="metric-value">${stats.users?.tutors || 0}</td></tr>
+        </table>
+
+        <h2>👨‍🏫 Tutor Statistics</h2>
+        <table>
+          <tr><th>Metric</th><th>Value</th></tr>
+          <tr><td>Total Tutors</td><td class="metric-value">${stats.tutors?.total || 0}</td></tr>
+          <tr><td>Verified</td><td class="metric-value">${stats.tutors?.verified || 0}</td></tr>
+          <tr><td>Pending Verification</td><td class="metric-value">${stats.tutors?.pending || 0}</td></tr>
+          <tr><td>Rejected</td><td class="metric-value">${stats.tutors?.rejected || 0}</td></tr>
+        </table>
+
+        <h2>📅 Booking Statistics</h2>
+        <table>
+          <tr><th>Metric</th><th>Value</th></tr>
+          <tr><td>Total Bookings</td><td class="metric-value">${stats.bookings?.total || 0}</td></tr>
+          <tr><td>Completed</td><td class="metric-value">${stats.bookings?.completed || 0}</td></tr>
+          <tr><td>Active</td><td class="metric-value">${stats.bookings?.active || 0}</td></tr>
+        </table>
+
+        <h2>💰 Revenue Statistics</h2>
+        <table>
+          <tr><th>Metric</th><th>Value</th></tr>
+          <tr><td>Total Revenue</td><td class="metric-value">${formatCurrency(stats.revenue?.total || 0)}</td></tr>
+          <tr><td>Platform Fee</td><td class="metric-value">${formatCurrency(stats.revenue?.platform || 0)}</td></tr>
+          <tr><td>Tutor Earnings</td><td class="metric-value">${formatCurrency(stats.revenue?.tutors || 0)}</td></tr>
+        </table>
+
+        <h2>💳 Withdrawal Statistics</h2>
+        <table>
+          <tr><th>Metric</th><th>Value</th></tr>
+          <tr><td>Pending Withdrawals</td><td class="metric-value">${stats.withdrawals?.pending || 0}</td></tr>
+        </table>
+
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} BlajarPlus. All rights reserved.</p>
+          <p>This report is confidential and intended for internal use only.</p>
+        </div>
+      </body>
+      </html>
+    `
+
+    printWindow.document.write(html)
+    printWindow.document.close()
+    printWindow.focus()
+    setTimeout(() => {
+      printWindow.print()
+      printWindow.close()
+    }, 250)
+  }
+
   if (loading) {
     return (
       <AdminLayout
@@ -279,17 +404,23 @@ export default function AdminReports() {
             <p className="text-blue-100">Download comprehensive analytics and insights</p>
           </div>
           <div className="flex gap-3">
-            <button className="px-6 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg hover:bg-white/30 transition-all font-semibold flex items-center gap-2">
+            <button 
+              onClick={exportToPDF}
+              className="px-6 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg hover:bg-white/30 transition-all font-semibold flex items-center gap-2"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               Export PDF
             </button>
-            <button className="px-6 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg hover:bg-white/30 transition-all font-semibold flex items-center gap-2">
+            <button 
+              onClick={exportToCSV}
+              className="px-6 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg hover:bg-white/30 transition-all font-semibold flex items-center gap-2"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Export Excel
+              Export CSV
             </button>
           </div>
         </div>
