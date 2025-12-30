@@ -74,6 +74,43 @@ export default function AdminTutors() {
     }
   }
 
+  const exportToCSV = () => {
+    if (tutors.length === 0) {
+      alert('No tutors to export')
+      return
+    }
+
+    const csvData = [
+      ['BlajarPlus - Tutors Report'],
+      ['Generated:', new Date().toLocaleString('id-ID')],
+      ['Filters:', `Status: ${filters.status || 'All'}, Search: ${filters.search || 'None'}`],
+      [''],
+      ['Tutor ID', 'Full Name', 'Email', 'Phone', 'Status', 'Rating', 'Total Earnings', 'Subjects', 'Joined Date'],
+      ...tutors.map(t => [
+        t.id || 'N/A',
+        t.user?.fullName || 'N/A',
+        t.user?.email || 'N/A',
+        t.user?.phone || 'N/A',
+        t.verificationStatus || 'N/A',
+        t.rating || 0,
+        formatCurrency(t.totalEarnings || 0),
+        t.subjects?.map((s: any) => s.name).join('; ') || 'N/A',
+        t.createdAt ? new Date(t.createdAt).toLocaleDateString('id-ID') : 'N/A'
+      ])
+    ]
+
+    const csvContent = csvData.map(row => row.join(',')).join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `tutors-${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <AdminLayout
       title="Tutor Management"
@@ -83,6 +120,15 @@ export default function AdminTutors() {
       ]}
       actions={
         <>
+          <button
+            onClick={exportToCSV}
+            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Export CSV
+          </button>
           <div className="flex gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-1">
             <button
               onClick={() => setViewMode('card')}
