@@ -85,32 +85,19 @@ export default function DashboardPage() {
     }
   ];
   
-  // Gamification data
+  // Gamification data - Real data from API
   const [userStats, setUserStats] = useState({
-    totalXP: 2450,
-    level: 12,
-    streak: 7,
-    longestStreak: 15,
-    totalLessons: 24,
-    hoursLearned: 48,
-    achievements: 8,
-    rank: 'Gold'
+    totalXP: 0,
+    level: 1,
+    streak: 0,
+    longestStreak: 0,
+    totalLessons: 0,
+    hoursLearned: 0,
+    achievements: 0,
+    rank: 'Bronze'
   });
 
-  const [achievements, setAchievements] = useState([
-    { id: 1, name: 'First Step', description: 'Complete your first lesson', icon: '🎯', unlocked: true, date: '2024-12-01' },
-    { id: 2, name: 'Week Warrior', description: 'Maintain 7-day streak', icon: '🔥', unlocked: true, date: '2024-12-15' },
-    { id: 3, name: 'Knowledge Seeker', description: 'Complete 10 lessons', icon: '📚', unlocked: true, date: '2024-12-20' },
-    { id: 4, name: 'Early Bird', description: 'Complete lesson before 8 AM', icon: '🌅', unlocked: true, date: '2024-12-10' },
-    { id: 5, name: 'Night Owl', description: 'Complete lesson after 10 PM', icon: '🦉', unlocked: true, date: '2024-12-12' },
-    { id: 6, name: 'Perfect Score', description: 'Get 100% in a lesson', icon: '💯', unlocked: true, date: '2024-12-18' },
-    { id: 7, name: 'Social Learner', description: 'Study with 5 different tutors', icon: '👥', unlocked: true, date: '2024-12-22' },
-    { id: 8, name: 'Dedicated', description: 'Complete 20 lessons', icon: '⭐', unlocked: true, date: '2024-12-25' },
-    { id: 9, name: 'Marathon', description: 'Study for 3 hours in one day', icon: '🏃', unlocked: false, date: null },
-    { id: 10, name: 'Master', description: 'Reach level 20', icon: '👑', unlocked: false, date: null },
-    { id: 11, name: 'Unstoppable', description: 'Maintain 30-day streak', icon: '🚀', unlocked: false, date: null },
-    { id: 12, name: 'Scholar', description: 'Complete 50 lessons', icon: '🎓', unlocked: false, date: null }
-  ]);
+  const [achievements, setAchievements] = useState<any[]>([]);
 
   const [payments, setPayments] = useState([
     { id: 1, date: '2024-12-28', description: 'Matematika - Budi Santoso', amount: 150000, status: 'completed', method: 'GoPay' },
@@ -137,6 +124,7 @@ export default function DashboardPage() {
 
     fetchUserProfile();
     fetchBookings();
+    fetchGamificationData();
   }, []);
 
   // Auto-play carousel
@@ -194,6 +182,53 @@ export default function DashboardPage() {
       if (storedUser) {
         setUser(JSON.parse(storedUser));
       }
+    }
+  };
+
+  const fetchGamificationData = async () => {
+    try {
+      // Fetch user progress
+      const progressResponse = await api.get('/gamification/progress');
+      const progress = progressResponse.data;
+      
+      // Fetch achievements
+      const achievementsResponse = await api.get('/gamification/achievements');
+      const achievementsData = achievementsResponse.data;
+      
+      // Calculate rank based on level
+      const calculateRank = (level: number) => {
+        if (level >= 50) return 'Diamond';
+        if (level >= 30) return 'Platinum';
+        if (level >= 20) return 'Gold';
+        if (level >= 10) return 'Silver';
+        return 'Bronze';
+      };
+      
+      // Update user stats with real data
+      setUserStats({
+        totalXP: progress.totalXp || 0,
+        level: progress.level || 1,
+        streak: progress.streak || 0,
+        longestStreak: progress.longestStreak || 0,
+        totalLessons: progress.totalSessions || 0,
+        hoursLearned: Math.round(progress.totalHours || 0),
+        achievements: achievementsData.filter((a: any) => a.unlocked).length,
+        rank: calculateRank(progress.level || 1)
+      });
+      
+      // Update achievements with real data
+      const formattedAchievements = achievementsData.map((achievement: any) => ({
+        id: achievement.id,
+        name: achievement.name,
+        description: achievement.description,
+        icon: achievement.icon,
+        unlocked: achievement.unlocked,
+        date: achievement.completedAt
+      }));
+      
+      setAchievements(formattedAchievements);
+    } catch (error) {
+      console.error('Error fetching gamification data:', error);
     }
   };
 
@@ -624,20 +659,30 @@ export default function DashboardPage() {
                       Achievement Terbaru
                     </h3>
                     <button 
-                      onClick={() => setActiveTab('achievements')}
+                      onClick={() => setActiveTab('gamification')}
                       className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
                     >
                       Lihat Semua
                     </button>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    {achievements.filter(a => a.unlocked).slice(0, 4).map(achievement => (
-                      <div key={achievement.id} className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 text-center hover:scale-105 transition">
-                        <div className="text-4xl mb-2">{achievement.icon}</div>
-                        <div className="font-semibold text-sm text-gray-900">{achievement.name}</div>
-                        <div className="text-xs text-gray-500 mt-1">{new Date(achievement.date!).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })}</div>
+                    {achievements.filter(a => a.unlocked).length > 0 ? (
+                      achievements.filter(a => a.unlocked).slice(0, 4).map(achievement => (
+                        <div key={achievement.id} className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 text-center hover:scale-105 transition">
+                          <div className="text-4xl mb-2">{achievement.icon}</div>
+                          <div className="font-semibold text-sm text-gray-900">{achievement.name}</div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {achievement.date ? new Date(achievement.date).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }) : 'Baru'}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-2 text-center py-8 text-gray-500">
+                        <div className="text-4xl mb-2">🏆</div>
+                        <p className="text-sm">Belum ada achievement yang terbuka</p>
+                        <p className="text-xs mt-1">Mulai belajar untuk mendapatkan achievement!</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
 
