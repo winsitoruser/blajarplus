@@ -99,21 +99,8 @@ export default function DashboardPage() {
 
   const [achievements, setAchievements] = useState<any[]>([]);
 
-  const [payments, setPayments] = useState([
-    { id: 1, date: '2024-12-28', description: 'Matematika - Budi Santoso', amount: 150000, status: 'completed', method: 'GoPay' },
-    { id: 2, date: '2024-12-25', description: 'Bahasa Inggris - Siti Nurhaliza', amount: 200000, status: 'completed', method: 'OVO' },
-    { id: 3, date: '2024-12-20', description: 'Fisika - Andi Wijaya', amount: 175000, status: 'completed', method: 'Bank Transfer' },
-    { id: 4, date: '2024-12-15', description: 'Kimia - Dewi Lestari', amount: 180000, status: 'completed', method: 'GoPay' },
-    { id: 5, date: '2024-12-10', description: 'Matematika - Budi Santoso', amount: 150000, status: 'completed', method: 'OVO' }
-  ]);
-
-  const [learningHistory, setLearningHistory] = useState([
-    { id: 1, date: '2024-12-28', subject: 'Matematika', tutor: 'Budi Santoso', duration: 2, rating: 5, xpEarned: 100, notes: 'Excellent session on calculus' },
-    { id: 2, date: '2024-12-27', subject: 'Bahasa Inggris', tutor: 'Siti Nurhaliza', duration: 1.5, rating: 5, xpEarned: 75, notes: 'Great conversation practice' },
-    { id: 3, date: '2024-12-26', subject: 'Fisika', tutor: 'Andi Wijaya', duration: 2, rating: 4, xpEarned: 100, notes: 'Good explanation on mechanics' },
-    { id: 4, date: '2024-12-25', subject: 'Matematika', tutor: 'Budi Santoso', duration: 2, rating: 5, xpEarned: 100, notes: 'Trigonometry mastered!' },
-    { id: 5, date: '2024-12-24', subject: 'Kimia', tutor: 'Dewi Lestari', duration: 1.5, rating: 5, xpEarned: 75, notes: 'Chemical reactions explained well' }
-  ]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [learningHistory, setLearningHistory] = useState<any[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -125,6 +112,8 @@ export default function DashboardPage() {
     fetchUserProfile();
     fetchBookings();
     fetchGamificationData();
+    fetchPayments();
+    fetchLearningHistory();
   }, []);
 
   // Auto-play carousel
@@ -229,6 +218,56 @@ export default function DashboardPage() {
       setAchievements(formattedAchievements);
     } catch (error) {
       console.error('Error fetching gamification data:', error);
+    }
+  };
+
+  const fetchPayments = async () => {
+    try {
+      // Get payments from completed bookings
+      const response = await api.get('/bookings');
+      const bookingsData = response.data.data || [];
+      
+      // Filter completed bookings and format as payments
+      const formattedPayments = bookingsData
+        .filter((booking: any) => booking.status === 'completed' || booking.status === 'confirmed')
+        .map((booking: any) => ({
+          id: booking.id,
+          date: booking.scheduledAt || booking.createdAt,
+          description: `${booking.subject?.name || 'Lesson'} - ${booking.tutor?.user?.fullName || 'Tutor'}`,
+          amount: booking.totalAmount || 0,
+          status: booking.status === 'completed' ? 'completed' : 'pending',
+          method: booking.payment?.paymentMethod || 'Transfer'
+        }));
+      
+      setPayments(formattedPayments);
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      setPayments([]);
+    }
+  };
+
+  const fetchLearningHistory = async () => {
+    try {
+      const response = await api.get('/gamification/history');
+      const historyData = response.data;
+      
+      // Format learning history data for display
+      const formattedHistory = historyData.map((item: any) => ({
+        id: item.id,
+        date: item.createdAt,
+        subject: item.activityType,
+        tutor: item.description || 'Learning Activity',
+        duration: item.metadata?.duration || 0,
+        rating: 5, // Default rating since not in API
+        xpEarned: item.xpEarned,
+        notes: item.description
+      }));
+      
+      setLearningHistory(formattedHistory);
+    } catch (error) {
+      console.error('Error fetching learning history:', error);
+      // Keep empty array if API fails
+      setLearningHistory([]);
     }
   };
 
@@ -697,7 +736,7 @@ export default function DashboardPage() {
                         </div>
                         <div>
                           <div className="text-sm text-gray-600">Total Pengeluaran</div>
-                          <div className="text-lg font-bold text-gray-900">Rp {payments.reduce((sum, p) => sum + p.amount, 0).toLocaleString('id-ID')}</div>
+                          <div className="text-lg font-bold text-gray-900">Rp {(payments.length > 0 ? payments.reduce((sum, p) => sum + p.amount, 0) : 0).toLocaleString('id-ID')}</div>
                         </div>
                       </div>
                     </div>
@@ -925,7 +964,7 @@ export default function DashboardPage() {
                       <div>
                         <div className="text-sm opacity-90 mb-1">Total Pengeluaran</div>
                         <div className="text-2xl font-bold">
-                          Rp {payments.reduce((sum, p) => sum + p.amount, 0).toLocaleString('id-ID')}
+                          Rp {(payments.length > 0 ? payments.reduce((sum, p) => sum + p.amount, 0) : 0).toLocaleString('id-ID')}
                         </div>
                       </div>
                       <CreditCard className="w-10 h-10 opacity-80" />
@@ -944,7 +983,7 @@ export default function DashboardPage() {
                   <CardContent className="p-6">
                     <div className="text-sm text-gray-600 mb-1">Rata-rata per Transaksi</div>
                     <div className="text-2xl font-bold">
-                      Rp {Math.round(payments.reduce((sum, p) => sum + p.amount, 0) / payments.length).toLocaleString('id-ID')}
+                      Rp {(payments.length > 0 ? Math.round(payments.reduce((sum, p) => sum + p.amount, 0) / payments.length) : 0).toLocaleString('id-ID')}
                     </div>
                   </CardContent>
                 </Card>
