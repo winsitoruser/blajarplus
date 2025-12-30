@@ -137,6 +137,43 @@ export class GamificationService {
     };
   }
 
+  // Add XP directly (for language learning integration)
+  async addXp(userId: string, xpAmount: number, activityType: string, description?: string) {
+    const progress = await this.getUserProgress(userId);
+    
+    const newTotalXP = progress.totalXp + xpAmount;
+    const newLevel = this.calculateLevel(newTotalXP);
+    const currentLevelXP = newTotalXP - (newLevel * newLevel * 100);
+
+    const updatedProgress = await this.prisma.userProgress.update({
+      where: { userId },
+      data: {
+        totalXp: newTotalXP,
+        xp: currentLevelXP,
+        level: newLevel,
+        lastActiveDate: new Date(),
+      },
+    });
+
+    // Create learning history entry
+    await this.prisma.learningHistory.create({
+      data: {
+        userId,
+        activityType,
+        description: description || `Earned ${xpAmount} XP from ${activityType}`,
+        xpEarned: xpAmount,
+      },
+    });
+
+    return {
+      progress: updatedProgress,
+      xpEarned: xpAmount,
+      levelUp: newLevel > progress.level,
+      newLevel,
+      rank: this.calculateRank(newLevel),
+    };
+  }
+
   // Check and unlock achievements
   async checkAchievements(userId: string, progress: any) {
     const achievements = await this.prisma.achievement.findMany({

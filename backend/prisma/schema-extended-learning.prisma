@@ -1,0 +1,230 @@
+// ============================================
+// EXTENDED LEARNING SYSTEM - MATERIALS, CERTIFICATIONS, LEARNING PATHS
+// ============================================
+
+// Add these models to the main schema.prisma file after the existing language learning models
+
+// Study Materials for Courses
+model CourseMaterial {
+  id          String       @id @default(uuid())
+  courseId    String       @map("course_id")
+  title       String
+  description String?      @db.Text
+  type        MaterialType
+  content     String?      @db.Text
+  url         String?
+  fileUrl     String?      @map("file_url")
+  duration    Int?         // in minutes
+  order       Int          @default(0)
+  isRequired  Boolean      @default(false) @map("is_required")
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userProgress UserMaterialProgress[]
+
+  @@index([courseId])
+  @@index([type])
+  @@map("course_materials")
+}
+
+// Study Materials for Units
+model UnitMaterial {
+  id          String       @id @default(uuid())
+  unitId      String       @map("unit_id")
+  title       String
+  description String?      @db.Text
+  type        MaterialType
+  content     String?      @db.Text
+  url         String?
+  fileUrl     String?      @map("file_url")
+  duration    Int?         // in minutes
+  order       Int          @default(0)
+  isRequired  Boolean      @default(false) @map("is_required")
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  unit        Unit         @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  userProgress UserMaterialProgress[]
+
+  @@index([unitId])
+  @@index([type])
+  @@map("unit_materials")
+}
+
+// Study Materials for Lessons
+model LessonMaterial {
+  id          String       @id @default(uuid())
+  lessonId    String       @map("lesson_id")
+  title       String
+  description String?      @db.Text
+  type        MaterialType
+  content     String?      @db.Text
+  url         String?
+  fileUrl     String?      @map("file_url")
+  duration    Int?         // in minutes
+  order       Int          @default(0)
+  isRequired  Boolean      @default(true) @map("is_required")
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  lesson      Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  userProgress UserMaterialProgress[]
+
+  @@index([lessonId])
+  @@index([type])
+  @@map("lesson_materials")
+}
+
+// User Progress on Materials
+model UserMaterialProgress {
+  id                String           @id @default(uuid())
+  userId            String           @map("user_id")
+  courseMaterialId  String?          @map("course_material_id")
+  unitMaterialId    String?          @map("unit_material_id")
+  lessonMaterialId  String?          @map("lesson_material_id")
+  isCompleted       Boolean          @default(false) @map("is_completed")
+  progress          Int              @default(0) // percentage 0-100
+  timeSpent         Int              @default(0) @map("time_spent") // in seconds
+  lastAccessedAt    DateTime?        @map("last_accessed_at")
+  completedAt       DateTime?        @map("completed_at")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseMaterial    CourseMaterial?  @relation(fields: [courseMaterialId], references: [id], onDelete: Cascade)
+  unitMaterial      UnitMaterial?    @relation(fields: [unitMaterialId], references: [id], onDelete: Cascade)
+  lessonMaterial    LessonMaterial?  @relation(fields: [lessonMaterialId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([courseMaterialId])
+  @@index([unitMaterialId])
+  @@index([lessonMaterialId])
+  @@map("user_material_progress")
+}
+
+// Certifications
+model Certification {
+  id                String            @id @default(uuid())
+  courseId          String            @map("course_id")
+  name              String
+  description       String?           @db.Text
+  type              CertificationType
+  criteria          Json              // Requirements to earn certification
+  badgeUrl          String?           @map("badge_url")
+  certificateTemplate String?         @db.Text @map("certificate_template")
+  isActive          Boolean           @default(true) @map("is_active")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  course            Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userCertifications UserCertification[]
+
+  @@index([courseId])
+  @@index([type])
+  @@map("certifications")
+}
+
+// User Certifications
+model UserCertification {
+  id                String        @id @default(uuid())
+  userId            String        @map("user_id")
+  certificationId   String        @map("certification_id")
+  earnedAt          DateTime      @default(now()) @map("earned_at")
+  certificateNumber String        @unique @map("certificate_number")
+  certificateUrl    String?       @map("certificate_url")
+  score             Int?          // Final score if applicable
+  validUntil        DateTime?     @map("valid_until")
+  isRevoked         Boolean       @default(false) @map("is_revoked")
+  metadata          Json?
+
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  certification     Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, certificationId])
+  @@index([userId])
+  @@index([certificationId])
+  @@index([earnedAt])
+  @@map("user_certifications")
+}
+
+// Learning Paths (Timeline & Planning)
+model LearningPath {
+  id              String              @id @default(uuid())
+  userId          String              @map("user_id")
+  courseId        String              @map("course_id")
+  targetDate      DateTime?           @map("target_date")
+  hoursPerWeek    Int                 @default(5) @map("hours_per_week")
+  status          LearningPathStatus  @default(NOT_STARTED)
+  currentUnitId   String?             @map("current_unit_id")
+  currentLessonId String?             @map("current_lesson_id")
+  startedAt       DateTime?           @map("started_at")
+  completedAt     DateTime?           @map("completed_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course          Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  milestones      LearningMilestone[]
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([status])
+  @@map("learning_paths")
+}
+
+// Learning Milestones (Target Planning)
+model LearningMilestone {
+  id              String         @id @default(uuid())
+  learningPathId  String         @map("learning_path_id")
+  title           String
+  description     String?        @db.Text
+  targetDate      DateTime       @map("target_date")
+  unitId          String?        @map("unit_id")
+  lessonId        String?        @map("lesson_id")
+  isCompleted     Boolean        @default(false) @map("is_completed")
+  completedAt     DateTime?      @map("completed_at")
+  order           Int            @default(0)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  learningPath    LearningPath   @relation(fields: [learningPathId], references: [id], onDelete: Cascade)
+
+  @@index([learningPathId])
+  @@index([targetDate])
+  @@map("learning_milestones")
+}
+
+// Study Sessions (Track learning time)
+model StudySession {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  courseId    String?  @map("course_id")
+  unitId      String?  @map("unit_id")
+  lessonId    String?  @map("lesson_id")
+  startTime   DateTime @default(now()) @map("start_time")
+  endTime     DateTime? @map("end_time")
+  duration    Int?     // in seconds
+  xpEarned    Int      @default(0) @map("xp_earned")
+  metadata    Json?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([startTime])
+  @@map("study_sessions")
+}
+
+// Add these relations to existing User model:
+// userMaterialProgress UserMaterialProgress[]
+// certifications       UserCertification[]
+// learningPaths        LearningPath[]
+// studySessions        StudySession[]
+
+// Add these relations to existing Lesson model:
+// materials            LessonMaterial[]

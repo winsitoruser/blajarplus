@@ -1,0 +1,305 @@
+// Language Learning Module Schema
+// Inspired by Duolingo - Free language learning platform
+
+enum LanguageCode {
+  EN // English
+  JA // Japanese
+  FR // French
+  KO // Korean
+  ES // Spanish
+  PT // Portuguese
+}
+
+enum ProficiencyLevel {
+  BEGINNER      // A1
+  ELEMENTARY    // A2
+  INTERMEDIATE  // B1
+  UPPER_INTERMEDIATE // B2
+  ADVANCED      // C1
+  EXPERT        // C2
+}
+
+enum ExerciseType {
+  MULTIPLE_CHOICE
+  FILL_IN_BLANK
+  TRANSLATION
+  LISTENING
+  SPEAKING
+  MATCHING
+  SENTENCE_BUILDING
+}
+
+enum ExerciseDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+// Language Model
+model Language {
+  id          String       @id @default(uuid())
+  code        LanguageCode @unique
+  name        String       // e.g., "English", "日本語"
+  nativeName  String       @map("native_name") // Native language name
+  flag        String?      // Flag emoji or icon
+  description String?
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  courses     Course[]
+  userProgress UserLanguageProgress[]
+
+  @@map("languages")
+}
+
+// Course (e.g., "English for Beginners")
+model Course {
+  id          String           @id @default(uuid())
+  languageId  String           @map("language_id")
+  title       String
+  description String?
+  level       ProficiencyLevel
+  order       Int              @default(0) // Display order
+  icon        String?          // Course icon/emoji
+  color       String?          // Theme color
+  isActive    Boolean          @default(true) @map("is_active")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  language    Language         @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  units       Unit[]
+  userProgress UserCourseProgress[]
+
+  @@index([languageId])
+  @@index([level])
+  @@map("courses")
+}
+
+// Unit (e.g., "Greetings", "Numbers", "Food")
+model Unit {
+  id          String   @id @default(uuid())
+  courseId    String   @map("course_id")
+  title       String
+  description String?
+  order       Int      @default(0)
+  icon        String?
+  xpReward    Int      @default(10) @map("xp_reward") // XP for completing unit
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+  userProgress UserUnitProgress[]
+
+  @@index([courseId])
+  @@map("units")
+}
+
+// Lesson (e.g., "Basic Greetings", "Counting 1-10")
+model Lesson {
+  id          String   @id @default(uuid())
+  unitId      String   @map("unit_id")
+  title       String
+  description String?
+  order       Int      @default(0)
+  xpReward    Int      @default(5) @map("xp_reward")
+  hearts      Int      @default(5) // Lives/hearts for this lesson
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  unit        Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  exercises   Exercise[]
+  userProgress UserLessonProgress[]
+
+  @@index([unitId])
+  @@map("lessons")
+}
+
+// Exercise (Individual question/task)
+model Exercise {
+  id          String             @id @default(uuid())
+  lessonId    String             @map("lesson_id")
+  type        ExerciseType
+  difficulty  ExerciseDifficulty @default(MEDIUM)
+  question    String             // Question text or prompt
+  questionAudio String?          @map("question_audio") // Audio URL for listening exercises
+  questionImage String?          @map("question_image") // Image URL
+  correctAnswer String           @map("correct_answer") // Correct answer
+  options     Json?              // For multiple choice: ["option1", "option2", "option3"]
+  explanation String?            // Explanation of the answer
+  hints       Json?              // Array of hints
+  order       Int                @default(0)
+  xpReward    Int                @default(1) @map("xp_reward")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  updatedAt   DateTime           @updatedAt @map("updated_at")
+
+  // Relations
+  lesson      Lesson             @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  userAnswers UserExerciseAnswer[]
+
+  @@index([lessonId])
+  @@index([type])
+  @@map("exercises")
+}
+
+// Vocabulary (Words/phrases taught in lessons)
+model Vocabulary {
+  id              String   @id @default(uuid())
+  languageCode    LanguageCode @map("language_code")
+  word            String
+  translation     String   // Translation in user's native language
+  pronunciation   String?  // Phonetic pronunciation
+  audioUrl        String?  @map("audio_url")
+  imageUrl        String?  @map("image_url")
+  partOfSpeech    String?  @map("part_of_speech") // noun, verb, adjective, etc.
+  exampleSentence String?  @map("example_sentence")
+  exampleTranslation String? @map("example_translation")
+  difficulty      ExerciseDifficulty @default(MEDIUM)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([languageCode])
+  @@index([difficulty])
+  @@map("vocabulary")
+}
+
+// User's overall language progress
+model UserLanguageProgress {
+  id              String           @id @default(uuid())
+  userId          String           @map("user_id")
+  languageId      String           @map("language_id")
+  currentLevel    ProficiencyLevel @default(BEGINNER) @map("current_level")
+  totalXp         Int              @default(0) @map("total_xp")
+  streak          Int              @default(0) // Daily streak
+  lastPracticeAt  DateTime?        @map("last_practice_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language        Language         @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, languageId])
+  @@index([userId])
+  @@index([languageId])
+  @@map("user_language_progress")
+}
+
+// User's course progress
+model UserCourseProgress {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  courseId        String   @map("course_id")
+  isCompleted     Boolean  @default(false) @map("is_completed")
+  completedAt     DateTime? @map("completed_at")
+  totalXpEarned   Int      @default(0) @map("total_xp_earned")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+  @@map("user_course_progress")
+}
+
+// User's unit progress
+model UserUnitProgress {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  unitId          String   @map("unit_id")
+  isUnlocked      Boolean  @default(false) @map("is_unlocked")
+  isCompleted     Boolean  @default(false) @map("is_completed")
+  completedAt     DateTime? @map("completed_at")
+  stars           Int      @default(0) // 0-3 stars based on performance
+  totalXpEarned   Int      @default(0) @map("total_xp_earned")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unit            Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, unitId])
+  @@index([userId])
+  @@index([unitId])
+  @@map("user_unit_progress")
+}
+
+// User's lesson progress
+model UserLessonProgress {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  lessonId        String   @map("lesson_id")
+  isCompleted     Boolean  @default(false) @map("is_completed")
+  completedAt     DateTime? @map("completed_at")
+  score           Int      @default(0) // Percentage score
+  heartsRemaining Int      @default(5) @map("hearts_remaining")
+  attempts        Int      @default(0)
+  totalXpEarned   Int      @default(0) @map("total_xp_earned")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson          Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
+  @@map("user_lesson_progress")
+}
+
+// User's exercise answers
+model UserExerciseAnswer {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  exerciseId      String   @map("exercise_id")
+  userAnswer      String   @map("user_answer")
+  isCorrect       Boolean  @map("is_correct")
+  timeSpent       Int      @default(0) @map("time_spent") // Seconds
+  hintsUsed       Int      @default(0) @map("hints_used")
+  xpEarned        Int      @default(0) @map("xp_earned")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise        Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([exerciseId])
+  @@index([isCorrect])
+  @@map("user_exercise_answers")
+}
+
+// Daily Goals
+model UserDailyGoal {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  date            DateTime @db.Date
+  xpGoal          Int      @default(20) @map("xp_goal") // Daily XP goal
+  xpEarned        Int      @default(0) @map("xp_earned")
+  lessonsGoal     Int      @default(3) @map("lessons_goal")
+  lessonsCompleted Int     @default(0) @map("lessons_completed")
+  isCompleted     Boolean  @default(false) @map("is_completed")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@map("user_daily_goals")
+}

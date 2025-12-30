@@ -61,6 +61,9 @@ export function Navbar() {
             <Link href="/search" className="text-white hover:text-secondary-200 transition font-medium">
               Cari Tutor
             </Link>
+            <Link href="/belajar-gratis" className="text-white hover:text-secondary-200 transition font-medium">
+              🌍 Belajar Gratis
+            </Link>
             {isLoggedIn && (
               <Link href="/dashboard" className="text-white hover:text-secondary-200 transition font-medium">
                 Dashboard
