@@ -20,38 +20,38 @@ enum UserStatus {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String?   @unique
-  phone         String?   @unique
-  passwordHash  String?   @map("password_hash")
-  fullName      String    @map("full_name")
-  avatarUrl     String?   @map("avatar_url")
-  gender        String?
-  birthdate     DateTime?
-  role          UserRole
-  status        UserStatus @default(active)
-  lastLoginAt   DateTime?  @map("last_login_at")
-  createdAt     DateTime   @default(now()) @map("created_at")
-  updatedAt     DateTime   @updatedAt @map("updated_at")
+  id           String     @id @default(uuid())
+  email        String?    @unique
+  phone        String?    @unique
+  passwordHash String?    @map("password_hash")
+  fullName     String     @map("full_name")
+  avatarUrl    String?    @map("avatar_url")
+  gender       String?
+  birthdate    DateTime?
+  role         UserRole
+  status       UserStatus @default(active)
+  lastLoginAt  DateTime?  @map("last_login_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
   // Relations
-  addresses         UserAddress[]
-  tutorProfile      TutorProfile?
-  studentBookings   Booking[]        @relation("StudentBookings")
-  sentMessages      Message[]
-  authoredReviews   Review[]
-  favorites         Favorite[]
-  notifications     Notification[]
-  studentProgress   ProgressLog[]    @relation("StudentProgress")
-  packagePurchases  PackagePurchase[]
-  reports           Report[]
-  wallet            Wallet?
-  studentMaterials  StudentMaterial[] @relation("StudentMaterials")
-  
+  addresses        UserAddress[]
+  tutorProfile     TutorProfile?
+  studentBookings  Booking[]         @relation("StudentBookings")
+  sentMessages     Message[]
+  authoredReviews  Review[]
+  favorites        Favorite[]
+  notifications    Notification[]
+  studentProgress  ProgressLog[]     @relation("StudentProgress")
+  packagePurchases PackagePurchase[]
+  reports          Report[]
+  wallet           Wallet?
+  studentMaterials StudentMaterial[] @relation("StudentMaterials")
+
   // Gamification Relations
-  userAchievements  UserAchievement[]
-  userProgress      UserProgress?
-  learningHistory   LearningHistory[]
+  userAchievements UserAchievement[]
+  userProgress     UserProgress?
+  learningHistory  LearningHistory[]
 
   @@index([email])
   @@index([phone])
@@ -61,18 +61,18 @@ model User {
 }
 
 model UserAddress {
-  id             String   @id @default(uuid())
-  userId         String   @map("user_id")
-  label          String?
-  province       String?
-  city           String?
-  district       String?
-  addressDetail  String?  @map("address_detail")
-  lat            Decimal? 
-  lng            Decimal? 
-  isPrimary      Boolean  @default(false) @map("is_primary")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  label         String?
+  province      String?
+  city          String?
+  district      String?
+  addressDetail String?  @map("address_detail")
+  lat           Decimal?
+  lng           Decimal?
+  isPrimary     Boolean  @default(false) @map("is_primary")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -96,43 +96,44 @@ enum TutorStatus {
 }
 
 model TutorProfile {
-  id                     String             @id @default(uuid())
-  userId                 String             @unique @map("user_id")
-  headline               String?
-  bio                    String?
-  education              String?
-  experienceYears        Int?               @map("experience_years")
-  teachingModes          String[]           @map("teaching_modes")
-  baseCity               String?            @map("base_city")
-  timezone               String             @default("Asia/Jakarta")
-  introVideoUrl          String?            @map("intro_video_url")
-  hourlyRate             Decimal            @map("hourly_rate") 
-  currency               String             @default("IDR")
-  isVerified             Boolean            @default(false) @map("is_verified")
-  verificationStatus     VerificationStatus @default(none) @map("verification_status")
-  verificationNote       String?            @map("verification_note")
-  ratingAvg              Decimal            @default(0.0) @map("rating_avg") 
-  ratingCount            Int                @default(0) @map("rating_count")
-  completedLessonsCount  Int                @default(0) @map("completed_lessons_count")
-  responseRate           Int                @default(0) @map("response_rate")
-  offerFreeTrial         Boolean            @default(false) @map("offer_free_trial")
-  freeTrialDuration      Int?               @map("free_trial_duration")
-  status                 TutorStatus        @default(draft)
-  createdAt              DateTime           @default(now()) @map("created_at")
-  updatedAt              DateTime           @updatedAt @map("updated_at")
+  id                    String             @id @default(uuid())
+  userId                String             @unique @map("user_id")
+  headline              String?
+  bio                   String?
+  education             String?
+  experienceYears       Int?               @map("experience_years")
+  teachingModes         String[]           @map("teaching_modes")
+  baseCity              String?            @map("base_city")
+  timezone              String             @default("Asia/Jakarta")
+  introVideoUrl         String?            @map("intro_video_url")
+  hourlyRate            Decimal            @map("hourly_rate")
+  currency              String             @default("IDR")
+  isVerified            Boolean            @default(false) @map("is_verified")
+  verificationStatus    VerificationStatus @default(none) @map("verification_status")
+  verificationNote      String?            @map("verification_note")
+  ratingAvg             Decimal            @default(0.0) @map("rating_avg")
+  ratingCount           Int                @default(0) @map("rating_count")
+  completedLessonsCount Int                @default(0) @map("completed_lessons_count")
+  responseRate          Int                @default(0) @map("response_rate")
+  offerFreeTrial        Boolean            @default(false) @map("offer_free_trial")
+  freeTrialDuration     Int?               @map("free_trial_duration")
+  status                TutorStatus        @default(draft)
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
 
-  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subjects          TutorSubject[]
-  availabilities    TutorAvailability[]
-  documents         TutorDocument[]
-  bookings          Booking[]
-  reviews           Review[]
-  progressLogs      ProgressLog[]       @relation("TutorProgress")
-  conversations     Conversation[]
-  packages          LessonPackage[]
-  timeOffs          TutorTimeOff[]
-  withdrawals       Withdrawal[]
-  syllabi           Syllabus[]
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjects       TutorSubject[]
+  availabilities TutorAvailability[]
+  documents      TutorDocument[]
+  bookings       Booking[]
+  reviews        Review[]
+  progressLogs   ProgressLog[]       @relation("TutorProgress")
+  conversations  Conversation[]
+  packages       LessonPackage[]
+  timeOffs       TutorTimeOff[]
+  withdrawals    Withdrawal[]
+  syllabi        Syllabus[]
+  subscriptions  TutorSubscription[]
 
   @@index([userId])
   @@index([baseCity])
@@ -144,12 +145,12 @@ model TutorProfile {
 }
 
 model SubjectCategory {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
-  slug      String    @unique
-  isActive  Boolean   @default(true) @map("is_active")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  slug      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   subjects Subject[]
 
@@ -189,7 +190,7 @@ model TutorSubject {
   tutorId       String   @map("tutor_profile_id")
   subjectId     String   @map("subject_id")
   level         Level
-  priceOverride Decimal? @map("price_override") 
+  priceOverride Decimal? @map("price_override")
   currency      String   @default("IDR")
   description   String?
   isActive      Boolean  @default(true) @map("is_active")
@@ -208,15 +209,15 @@ model TutorSubject {
 }
 
 model TutorAvailability {
-  id                 String   @id @default(uuid())
-  tutorId            String   @map("tutor_profile_id")
-  dayOfWeek          Int      @map("day_of_week")
-  startTime          String   @map("start_time")
-  endTime            String   @map("end_time")
-  slotDurationMinutes Int     @default(60) @map("slot_duration_minutes")
-  isActive           Boolean  @default(true) @map("is_active")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  id                  String   @id @default(uuid())
+  tutorId             String   @map("tutor_profile_id")
+  dayOfWeek           Int      @map("day_of_week")
+  startTime           String   @map("start_time")
+  endTime             String   @map("end_time")
+  slotDurationMinutes Int      @default(60) @map("slot_duration_minutes")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
   tutor TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
 
@@ -300,40 +301,40 @@ enum CancelledBy {
 }
 
 model Booking {
-  id              String         @id @default(uuid())
-  bookingNumber   String?        @unique @map("booking_number")
-  studentId       String         @map("student_id")
-  tutorId         String         @map("tutor_profile_id")
-  tutorSubjectId  String?        @map("tutor_subject_id")
-  mode            String?
-  startAt         DateTime       @map("start_at")
-  endAt           DateTime       @map("end_at")
-  durationMinutes Int            @map("duration_minutes")
-  locationType    LocationType?  @map("location_type")
-  locationAddress String?        @map("location_address")
-  lat             Decimal?       
-  lng             Decimal?       
-  meetingLink     String?        @map("meeting_link")
-  status          BookingStatus  @default(draft)
-  cancelledBy     CancelledBy?   @map("cancelled_by")
-  cancelReason    String?        @map("cancel_reason")
+  id               String        @id @default(uuid())
+  bookingNumber    String?       @unique @map("booking_number")
+  studentId        String        @map("student_id")
+  tutorId          String        @map("tutor_profile_id")
+  tutorSubjectId   String?       @map("tutor_subject_id")
+  mode             String?
+  startAt          DateTime      @map("start_at")
+  endAt            DateTime      @map("end_at")
+  durationMinutes  Int           @map("duration_minutes")
+  locationType     LocationType? @map("location_type")
+  locationAddress  String?       @map("location_address")
+  lat              Decimal?
+  lng              Decimal?
+  meetingLink      String?       @map("meeting_link")
+  status           BookingStatus @default(draft)
+  cancelledBy      CancelledBy?  @map("cancelled_by")
+  cancelReason     String?       @map("cancel_reason")
   rescheduleReason String?       @map("reschedule_reason")
-  price           Decimal        
-  platformFee     Decimal        @map("platform_fee") 
-  totalAmount     Decimal        @map("total_amount") 
-  currency        String         @default("IDR")
-  notes           String?
-  completedAt     DateTime?      @map("completed_at")
-  createdAt       DateTime       @default(now()) @map("created_at")
-  updatedAt       DateTime       @updatedAt @map("updated_at")
+  price            Decimal
+  platformFee      Decimal       @map("platform_fee")
+  totalAmount      Decimal       @map("total_amount")
+  currency         String        @default("IDR")
+  notes            String?
+  completedAt      DateTime?     @map("completed_at")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
 
-  student       User             @relation("StudentBookings", fields: [studentId], references: [id], onDelete: Cascade)
-  tutor         TutorProfile     @relation(fields: [tutorId], references: [id], onDelete: Cascade)
-  tutorSubject  TutorSubject?    @relation(fields: [tutorSubjectId], references: [id], onDelete: SetNull)
-  payment       PaymentTransaction?
-  statusLogs    BookingStatusLog[]
-  progressLogs  ProgressLog[]
-  review        Review?
+  student      User                @relation("StudentBookings", fields: [studentId], references: [id], onDelete: Cascade)
+  tutor        TutorProfile        @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  tutorSubject TutorSubject?       @relation(fields: [tutorSubjectId], references: [id], onDelete: SetNull)
+  payment      PaymentTransaction?
+  statusLogs   BookingStatusLog[]
+  progressLogs ProgressLog[]
+  review       Review?
 
   @@index([studentId])
   @@index([tutorId])
@@ -344,13 +345,13 @@ model Booking {
 }
 
 model BookingStatusLog {
-  id             String    @id @default(uuid())
-  bookingId      String    @map("booking_id")
-  fromStatus     String?   @map("from_status")
-  toStatus       String    @map("to_status")
+  id              String   @id @default(uuid())
+  bookingId       String   @map("booking_id")
+  fromStatus      String?  @map("from_status")
+  toStatus        String   @map("to_status")
   changedByUserId String?  @map("changed_by_user_id")
-  reason         String?
-  createdAt      DateTime  @default(now()) @map("created_at")
+  reason          String?
+  createdAt       DateTime @default(now()) @map("created_at")
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
@@ -380,7 +381,7 @@ model PaymentTransaction {
   paymentMethod     String?         @map("payment_method")
   externalPaymentId String?         @map("external_payment_id")
   status            PaymentStatus   @default(pending)
-  amount            Decimal         
+  amount            Decimal
   currency          String          @default("IDR")
   paidAt            DateTime?       @map("paid_at")
   expiresAt         DateTime?       @map("expires_at")
@@ -399,12 +400,12 @@ model PaymentTransaction {
 model Wallet {
   id        String   @id @default(uuid())
   userId    String   @unique @map("user_id")
-  balance   Decimal  @default(0.0) 
+  balance   Decimal  @default(0.0)
   currency  String   @default("IDR")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   entries WalletLedgerEntry[]
 
   @@index([userId])
@@ -423,7 +424,7 @@ model WalletLedgerEntry {
   id          String          @id @default(uuid())
   walletId    String          @map("wallet_id")
   type        LedgerEntryType
-  amount      Decimal         
+  amount      Decimal
   bookingId   String?         @map("booking_id")
   referenceId String?         @map("reference_id")
   meta        Json?
@@ -439,14 +440,14 @@ model WalletLedgerEntry {
 }
 
 model Conversation {
-  id            String    @id @default(uuid())
-  studentId     String    @map("student_id")
-  tutorId       String    @map("tutor_profile_id")
-  lastMessageAt DateTime? @map("last_message_at")
-  isBlocked     Boolean   @default(false) @map("is_blocked")
-  blockedByUserId String? @map("blocked_by_user_id")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  id              String    @id @default(uuid())
+  studentId       String    @map("student_id")
+  tutorId         String    @map("tutor_profile_id")
+  lastMessageAt   DateTime? @map("last_message_at")
+  isBlocked       Boolean   @default(false) @map("is_blocked")
+  blockedByUserId String?   @map("blocked_by_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   tutor    TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
   messages Message[]
@@ -490,17 +491,17 @@ enum ReviewStatus {
 }
 
 model Review {
-  id               String       @id @default(uuid())
-  bookingId        String       @unique @map("booking_id")
-  tutorId          String       @map("tutor_profile_id")
-  authorUserId     String       @map("author_user_id")
-  rating           Int
-  comment          String?
-  status           ReviewStatus @default(published)
-  moderatedBy      String?      @map("moderated_by")
-  moderatedReason  String?      @map("moderated_reason")
-  createdAt        DateTime     @default(now()) @map("created_at")
-  updatedAt        DateTime     @updatedAt @map("updated_at")
+  id              String       @id @default(uuid())
+  bookingId       String       @unique @map("booking_id")
+  tutorId         String       @map("tutor_profile_id")
+  authorUserId    String       @map("author_user_id")
+  rating          Int
+  comment         String?
+  status          ReviewStatus @default(published)
+  moderatedBy     String?      @map("moderated_by")
+  moderatedReason String?      @map("moderated_reason")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
 
   booking Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   tutor   TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
@@ -558,7 +559,7 @@ model LessonPackage {
   tutorSubjectId String?  @map("tutor_subject_id")
   name           String
   sessionCount   Int      @map("session_count")
-  totalPrice     Decimal  @map("total_price") 
+  totalPrice     Decimal  @map("total_price")
   currency       String   @default("IDR")
   validDays      Int      @map("valid_days")
   isActive       Boolean  @default(true) @map("is_active")
@@ -721,7 +722,7 @@ model Material {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  syllabus         Syllabus           @relation(fields: [syllabusId], references: [id], onDelete: Cascade)
+  syllabus         Syllabus          @relation(fields: [syllabusId], references: [id], onDelete: Cascade)
   studentMaterials StudentMaterial[]
 
   @@index([syllabusId])
@@ -736,14 +737,14 @@ enum MaterialStatus {
 }
 
 model StudentMaterial {
-  id         String         @id @default(uuid())
-  studentId  String         @map("student_id")
-  materialId String         @map("material_id")
-  status     MaterialStatus @default(not_started)
-  notes      String?        @db.Text
-  completedAt DateTime?     @map("completed_at")
-  createdAt  DateTime       @default(now()) @map("created_at")
-  updatedAt  DateTime       @updatedAt @map("updated_at")
+  id          String         @id @default(uuid())
+  studentId   String         @map("student_id")
+  materialId  String         @map("material_id")
+  status      MaterialStatus @default(not_started)
+  notes       String?        @db.Text
+  completedAt DateTime?      @map("completed_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
 
   student  User     @relation("StudentMaterials", fields: [studentId], references: [id], onDelete: Cascade)
   material Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
@@ -830,14 +831,14 @@ model Achievement {
 }
 
 model UserAchievement {
-  id            String      @id @default(uuid())
-  userId        String      @map("user_id")
-  achievementId String      @map("achievement_id")
-  progress      Int         @default(0)
-  isCompleted   Boolean     @default(false) @map("is_completed")
-  completedAt   DateTime?   @map("completed_at")
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @updatedAt @map("updated_at")
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  achievementId String    @map("achievement_id")
+  progress      Int       @default(0)
+  isCompleted   Boolean   @default(false) @map("is_completed")
+  completedAt   DateTime? @map("completed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
@@ -850,18 +851,18 @@ model UserAchievement {
 }
 
 model UserProgress {
-  id              String   @id @default(uuid())
-  userId          String   @unique @map("user_id")
-  level           Int      @default(1)
-  xp              Int      @default(0)
-  totalXp         Int      @default(0) @map("total_xp")
-  streak          Int      @default(0)
-  longestStreak   Int      @default(0) @map("longest_streak")
-  lastActiveDate  DateTime @default(now()) @map("last_active_date")
-  totalSessions   Int      @default(0) @map("total_sessions")
-  totalHours      Float    @default(0) @map("total_hours")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  userId         String   @unique @map("user_id")
+  level          Int      @default(1)
+  xp             Int      @default(0)
+  totalXp        Int      @default(0) @map("total_xp")
+  streak         Int      @default(0)
+  longestStreak  Int      @default(0) @map("longest_streak")
+  lastActiveDate DateTime @default(now()) @map("last_active_date")
+  totalSessions  Int      @default(0) @map("total_sessions")
+  totalHours     Float    @default(0) @map("total_hours")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -871,13 +872,13 @@ model UserProgress {
 }
 
 model LearningHistory {
-  id          String   @id @default(uuid())
-  userId      String   @map("user_id")
-  activityType String  @map("activity_type")
-  description String   @db.Text
-  xpEarned    Int      @default(0) @map("xp_earned")
-  metadata    Json?
-  createdAt   DateTime @default(now()) @map("created_at")
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  activityType String   @map("activity_type")
+  description  String   @db.Text
+  xpEarned     Int      @default(0) @map("xp_earned")
+  metadata     Json?
+  createdAt    DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -885,4 +886,57 @@ model LearningHistory {
   @@index([activityType])
   @@index([createdAt])
   @@map("learning_history")
+}
+
+// Membership System
+enum MembershipTier {
+  BASIC
+  SILVER
+  GOLD
+}
+
+enum MembershipStatus {
+  active
+  expired
+  cancelled
+}
+
+model MembershipPlan {
+  id           String         @id @default(uuid())
+  name         String
+  tier         MembershipTier @unique
+  maxClasses   Int            @map("max_classes")
+  price        Decimal
+  currency     String         @default("IDR")
+  durationDays Int            @map("duration_days")
+  features     String[]
+  isActive     Boolean        @default(true) @map("is_active")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  subscriptions TutorSubscription[]
+
+  @@map("membership_plans")
+}
+
+model TutorSubscription {
+  id        String           @id @default(uuid())
+  tutorId   String           @map("tutor_id")
+  planId    String           @map("plan_id")
+  status    MembershipStatus @default(active)
+  startDate DateTime         @map("start_date")
+  endDate   DateTime         @map("end_date")
+  autoRenew Boolean          @default(false) @map("auto_renew")
+  paymentId String?          @map("payment_id")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  tutor TutorProfile   @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  plan  MembershipPlan @relation(fields: [planId], references: [id])
+
+  @@index([tutorId])
+  @@index([planId])
+  @@index([status])
+  @@index([endDate])
+  @@map("tutor_subscriptions")
 }
